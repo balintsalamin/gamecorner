@@ -1,5 +1,5 @@
 /* ============================================================================
-   UNO – stílusok
+   Colorcards – stílusok
    ============================================================================ */
 
 :root {
@@ -290,6 +290,30 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   font-size: 0.75rem;
 }
 
+/* Mini-kéz: az ellenfél lapjai apró, egymást átfedő téglalapokként */
+.mini-hand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 14px;
+  margin-top: 4px;
+}
+.mini-card {
+  width: 9px;
+  height: 13px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(135deg, var(--surface-3) 0 3px, var(--accent) 3px 6px);
+  border: 1px solid rgba(255,255,255,0.25);
+  margin-left: -5px;
+  flex-shrink: 0;
+}
+.mini-card:first-child { margin-left: 0; }
+.mini-overflow {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-left: 4px;
+}
+
 .table-area {
   display: flex;
   align-items: center;
@@ -436,6 +460,25 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   50% { transform: scale(1.06); }
 }
 
+/* Frissen húzott lap becsúszása a kezembe */
+.hand-container .card.card-enter {
+  animation: card-enter 0.35s ease;
+}
+@keyframes card-enter {
+  0% { transform: translateY(36px) scale(0.7); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Dobott lap "landolása", amikor új lap kerül a dobópakli tetejére */
+#discard-pile.discard-landing {
+  animation: discard-land 0.35s ease;
+}
+@keyframes discard-land {
+  0% { transform: scale(0.5) rotate(-20deg); opacity: 0.3; }
+  60% { transform: scale(1.12) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
 /* ---------------------------------------------------------------------- */
 /* End screen                                                               */
 /* ---------------------------------------------------------------------- */
@@ -524,9 +567,53 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
 }
 
 /* ---------------------------------------------------------------------- */
+/* Animációk: repülő lapok és lebegő feliratok                             */
+/* ---------------------------------------------------------------------- */
+.ghost-card {
+  position: fixed;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0.95;
+  transition: transform 0.5s cubic-bezier(.22,.7,.3,1), opacity 0.5s ease;
+}
+.ghost-card-back {
+  background: repeating-linear-gradient(135deg, var(--surface-3) 0 4px, var(--accent) 4px 8px);
+}
+
+.float-badge {
+  position: fixed;
+  pointer-events: none;
+  z-index: 200;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.float-badge.show {
+  animation: float-up 0.9s ease forwards;
+}
+@keyframes float-up {
+  0%   { opacity: 0; transform: translate(-50%, -100%) scale(0.7); }
+  20%  { opacity: 1; transform: translate(-50%, -130%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -220%) scale(1); }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Reduced motion                                                           */
 /* ---------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .screen.active { animation: none; }
   .hand-container .card.forced { animation: none; }
+  .hand-container .card.card-enter { animation: none; }
+  #discard-pile.discard-landing { animation: none; }
+  .float-badge.show { animation: none; }
 }
