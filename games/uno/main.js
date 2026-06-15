@@ -172,7 +172,7 @@ document.getElementById('btn-copy-code').addEventListener('click', async () => {
   const url = `${location.origin}${location.pathname}?room=${roomCode}`;
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'UNO szoba', text: `Csatlakozz az UNO szobámhoz: ${roomCode}`, url });
+      await navigator.share({ title: 'Colorcard szoba', text: url });
     } else {
       await navigator.clipboard.writeText(url);
       showToast('Link a vágólapra másolva!');
@@ -339,7 +339,7 @@ function renderOpponents(state) {
     if (handLen === 1 && !state.unoCalls[p.id]) {
       const warn = document.createElement('div');
       warn.className = 'uno-warn';
-      warn.textContent = '⚠️ Nincs UNO bemondva';
+      warn.textContent = '⚠️ Nincs ONECARD! bemondva';
       chip.appendChild(warn);
 
       const catchBtn = document.createElement('button');
