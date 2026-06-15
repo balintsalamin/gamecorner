@@ -20,14 +20,14 @@ const ACTION_VALUES = ['skip', 'reverse', 'draw2'];
 // ----------------------------------------------------------------------
 export const DEFAULT_SETTINGS = {
   startingHandSize: 7,
-  stackDrawTwo: false,
-  stackDrawFour: false,
-  crossStack: false,
+  stackDrawTwo: true,
+  stackDrawFour: true,
+  crossStack: true,
   jumpIn: false,
   sevenZero: false,
   drawUntilPlayable: false,
   mustPlayDrawn: false,
-  drawFourChallenge: true,
+  drawFourChallenge: false,
   unoPenalty: 2,
   scoringMode: 'single',
   targetScore: 500,
