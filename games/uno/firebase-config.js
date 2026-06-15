@@ -14,7 +14,7 @@
 // Firestore Security Rules adja (lásd README), nem ez a fájl.
 // ============================================================================
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDjxWmXmbTX4UMbgYkq1IXZY41vMPoSqRg",
   authDomain: "gamecorner-3e716.firebaseapp.com",
   projectId: "gamecorner-3e716",
