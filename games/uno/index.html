@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>UNO – Multiplayer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="back-link" href="../../index.html">← Játékok</a>
+
+  <!-- ============================== KEZDŐKÉPERNYŐ ============================== -->
+  <section id="screen-home" class="screen active">
+    <div class="card-panel">
+      <h1 class="title">🃏 UNO</h1>
+      <p class="subtitle">Multiplayer, teljesen testreszabható szabályokkal</p>
+
+      <label class="field">
+        <span>A neved</span>
+        <input id="input-name" type="text" maxlength="16" placeholder="pl. Anna" autocomplete="off">
+      </label>
+
+      <button id="btn-create-room" class="btn btn-primary">Új szoba létrehozása</button>
+
+      <div class="divider"><span>vagy</span></div>
+
+      <label class="field">
+        <span>Csatlakozás kóddal</span>
+        <input id="input-room-code" type="text" maxlength="5" placeholder="pl. AB12" autocomplete="off" class="uppercase">
+      </label>
+      <button id="btn-join-room" class="btn btn-secondary">Csatlakozás</button>
+
+      <p id="home-error" class="error-text"></p>
+    </div>
+  </section>
+
+  <!-- ============================== LOBBI ============================== -->
+  <section id="screen-lobby" class="screen">
+    <div class="card-panel">
+      <h1 class="title">Lobbi</h1>
+
+      <div class="room-code-box">
+        <div>
+          <span class="room-code-label">Szoba kódja</span>
+          <span id="room-code-display" class="room-code"></span>
+        </div>
+        <button id="btn-copy-code" class="btn btn-small">Megosztás / másolás</button>
+      </div>
+
+      <h2 class="section-title">Játékosok</h2>
+      <ul id="player-list" class="player-list"></ul>
+
+      <h2 class="section-title">Szabályok</h2>
+      <p class="hint">A házigazda állíthatja a szabályokat, mielőtt elindítja a játékot.</p>
+      <div id="settings-panel" class="settings-panel"></div>
+
+      <button id="btn-start-game" class="btn btn-primary">Játék indítása</button>
+      <p id="lobby-hint" class="hint"></p>
+      <button id="btn-leave-lobby" class="btn btn-text">Kilépés a szobából</button>
+    </div>
+  </section>
+
+  <!-- ============================== JÁTÉK ============================== -->
+  <section id="screen-game" class="screen">
+    <div class="game-wrap">
+
+      <div class="game-topbar">
+        <div class="room-pill">Szoba: <strong id="game-room-code"></strong></div>
+        <div id="direction-indicator" class="direction-pill">➡️</div>
+        <button id="btn-show-rules" class="btn btn-small">Szabályok</button>
+      </div>
+
+      <div id="opponents-list" class="opponents-list"></div>
+
+      <div class="table-area">
+        <div class="pile-group">
+          <button id="draw-pile" class="card card-back" title="Húzás">
+            <span id="deck-count" class="deck-count"></span>
+          </button>
+          <span class="pile-label">Húzópakli</span>
+        </div>
+
+        <div class="center-info">
+          <div id="current-color-badge" class="color-badge"></div>
+          <div id="draw-stack-badge" class="draw-stack-badge hidden"></div>
+          <div id="turn-indicator" class="turn-indicator"></div>
+        </div>
+
+        <div class="pile-group">
+          <div id="discard-pile" class="card"></div>
+          <span class="pile-label">Dobott lap</span>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button id="btn-draw" class="btn btn-secondary">Húzás</button>
+        <button id="btn-challenge" class="btn btn-warning hidden">+4 kihívása</button>
+        <button id="btn-call-uno" class="btn btn-uno hidden">UNO!</button>
+      </div>
+      <button id="btn-force-skip" class="btn btn-text hidden">Lecsatlakozott játékos átugrása →</button>
+
+
+      <div id="game-log" class="game-log"></div>
+
+      <div class="hand-wrap">
+        <div class="hand-label-row">
+          <span id="my-name-label" class="hand-label"></span>
+          <span id="my-hand-count" class="hand-count"></span>
+        </div>
+        <div id="hand-container" class="hand-container"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== KÖR / JÁTÉK VÉGE ============================== -->
+  <section id="screen-end" class="screen">
+    <div class="card-panel">
+      <h1 id="end-title" class="title"></h1>
+      <p id="end-subtitle" class="subtitle"></p>
+      <table id="end-scores" class="score-table"></table>
+      <button id="btn-next-round" class="btn btn-primary hidden">Következő kör</button>
+      <button id="btn-new-game" class="btn btn-secondary">Vissza a lobbiba</button>
+      <a href="../../index.html" class="btn btn-text">Vissza a főmenübe</a>
+    </div>
+  </section>
+
+  <!-- ============================== MODÁLOK ============================== -->
+  <div id="modal-color" class="modal hidden">
+    <div class="modal-box">
+      <h2>Válassz színt</h2>
+      <div class="color-choice-grid">
+        <button class="color-choice color-red" data-color="red">Piros</button>
+        <button class="color-choice color-yellow" data-color="yellow">Sárga</button>
+        <button class="color-choice color-green" data-color="green">Zöld</button>
+        <button class="color-choice color-blue" data-color="blue">Kék</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-seven" class="modal hidden">
+    <div class="modal-box">
+      <h2>Kivel cserélsz lapot?</h2>
+      <div id="seven-target-list" class="seven-target-list"></div>
+    </div>
+  </div>
+
+  <div id="modal-rules" class="modal hidden">
+    <div class="modal-box">
+      <h2>Aktuális szabályok</h2>
+      <div id="rules-summary" class="rules-summary"></div>
+      <button id="btn-close-rules" class="btn btn-secondary">Bezárás</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
