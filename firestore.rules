@@ -1,0 +1,33 @@
+// ============================================================================
+// Firestore biztonsági szabályok – UNO szobák
+// ============================================================================
+// Másold be ezt a Firebase konzolban:
+// Build → Firestore Database → Rules fül → illeszd be → Publish
+//
+// Mit csinál ez?
+// - Csak a "rooms" kollekcióhoz enged hozzáférést, és csak akkor, ha a
+//   dokumentum ID-ja pontosan 4 karakteres (ez a szobakód formátuma).
+// - Mindent mást (más kollekciókat) letilt.
+//
+// FONTOS – ennek a projektnek a korlátai:
+// Nincs bejelentkezés/azonosítás, így bárki, aki ismeri (vagy kitalálja) egy
+// szoba 4 karakteres kódját, olvashatja és írhatja azt a szobát. Ez egy
+// ingyenes, kiszolgáló nélküli, baráti/családi használatra szánt megoldás –
+// NE tárolj benne semmi érzékeny adatot. A 4 karakteres kód (kb. 1 millió
+// kombináció) elég ahhoz, hogy idegenek véletlenül ne találjanak rá egy
+// aktív szobára.
+// ============================================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{roomId} {
+      allow read, write: if roomId.size() == 4;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

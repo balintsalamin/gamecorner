@@ -1,0 +1,152 @@
+/* ============================================================================
+   Játékgyűjtemény – főoldal stílusok
+   ============================================================================ */
+
+:root {
+  --bg: #14141f;
+  --surface: #1f2032;
+  --surface-2: #2a2c45;
+  --surface-3: #34374f;
+  --text: #f4f4f8;
+  --text-dim: #9a9ab2;
+  --accent: #ffd166;
+
+  --uno-red: #e63946;
+  --uno-yellow: #ffd60a;
+  --uno-green: #2dc653;
+  --uno-blue: #3a86ff;
+
+  --radius: 18px;
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at top, #1c1d30 0%, var(--bg) 60%);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+body {
+  padding: 0 16px 32px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+h1, h2 { font-family: var(--font-display); margin: 0; }
+
+/* ---------------------------------------------------------------------- */
+/* Header                                                                   */
+/* ---------------------------------------------------------------------- */
+.hub-header {
+  padding-top: 28px;
+  text-align: center;
+}
+.hub-header .stripe {
+  height: 6px;
+  border-radius: 999px;
+  margin: 0 auto 20px;
+  max-width: 240px;
+  background: linear-gradient(90deg, var(--uno-red), var(--uno-yellow), var(--uno-green), var(--uno-blue));
+}
+.hub-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.hub-header p {
+  color: var(--text-dim);
+  margin-top: 8px;
+  font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Game grid                                                                */
+/* ---------------------------------------------------------------------- */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.game-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 16px 16px;
+  text-decoration: none;
+  color: var(--text);
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-height: 150px;
+}
+.game-tile:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) {
+  .game-tile:not(.placeholder):hover {
+    transform: translateY(-4px) rotate(-1deg);
+    box-shadow: 0 16px 30px rgba(0,0,0,0.4);
+  }
+}
+
+.tile-stripe {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--uno-red), var(--uno-yellow), var(--uno-green), var(--uno-blue));
+}
+
+.tile-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.game-tile h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.game-tile p {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.tile-tag {
+  margin-top: auto;
+  font-size: 0.7rem;
+  color: var(--accent);
+  background: rgba(255, 209, 102, 0.12);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.game-tile.placeholder {
+  opacity: 0.5;
+  cursor: default;
+}
+.game-tile.placeholder .tile-stripe {
+  filter: grayscale(1);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Footer                                                                   */
+/* ---------------------------------------------------------------------- */
+.hub-footer {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 40px;
+}

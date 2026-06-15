@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Játékgyűjtemény</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hub-header">
+    <div class="stripe"></div>
+    <h1>🎲 Játékgyűjtemény</h1>
+    <p>Válassz egy játékot, és hívd meg a barátaidat – minden a telefonodról.</p>
+  </header>
+
+  <main class="game-grid">
+    <!-- ============================================================
+         ÚJ JÁTÉK HOZZÁADÁSA: másold ezt a <a class="game-tile"> blokkot,
+         állítsd be a hivatkozást (href), az ikont és a leírást.
+         ============================================================ -->
+    <a class="game-tile" href="games/uno/index.html">
+      <div class="tile-stripe"></div>
+      <div class="tile-icon">🃏</div>
+      <h2>UNO</h2>
+      <p>Multiplayer kártyajáték, teljesen testreszabható szabályokkal.</p>
+      <span class="tile-tag">2–8 játékos</span>
+    </a>
+
+    <div class="game-tile placeholder">
+      <div class="tile-stripe"></div>
+      <div class="tile-icon">➕</div>
+      <h2>Következő játék</h2>
+      <p>Ide kerül majd a következő játék – hamarosan.</p>
+    </div>
+  </main>
+
+  <footer class="hub-footer">
+    <p>Ingyenesen üzemel GitHub Pages-en.</p>
+  </footer>
+</body>
+</html>
