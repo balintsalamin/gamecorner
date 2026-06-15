@@ -1,5 +1,5 @@
 // ============================================================================
-// UNO – UI + Firebase szinkronizálás
+// Colorcards – UI + Firebase szinkronizálás
 // ============================================================================
 // Ez a fájl köti össze a game-engine.js tiszta logikáját a Firestore
 // adatbázissal és a képernyőn megjelenő elemekkel. Minden játékos böngészője
@@ -20,6 +20,7 @@ import {
 const myId = getOrCreatePlayerId();
 let roomCode = null;
 let latestState = null;
+let previousState = null;
 let unsubscribe = null;
 let pendingPlay = null; // { card } – amíg a szín- vagy 7-es modál nyitva van
 
@@ -70,6 +71,17 @@ function cardInnerHtml(card) {
   return `<span class="card-corner tl">${text}</span><span class="card-value">${text}</span><span class="card-corner br">${text}</span>`;
 }
 const COLOR_VAR = { red: 'var(--uno-red)', yellow: 'var(--uno-yellow)', green: 'var(--uno-green)', blue: 'var(--uno-blue)' };
+function cardBackground(card) {
+  const color = cardColor(card);
+  if (color === 'wild') {
+    return 'linear-gradient(135deg, var(--uno-red) 0 25%, var(--uno-yellow) 25% 50%, var(--uno-green) 50% 75%, var(--uno-blue) 75% 100%)';
+  }
+  return COLOR_VAR[color] || 'var(--surface-3)';
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 // ----------------------------------------------------------------------
 // Firestore: szoba létrehozása / csatlakozás / dispatch
@@ -107,9 +119,11 @@ function subscribeRoom() {
         showToast('A szoba megszűnt.');
         roomCode = null;
         latestState = null;
+        previousState = null;
         showScreen('screen-home');
         return;
       }
+      previousState = latestState;
       latestState = snap.data();
       render();
     },
@@ -185,6 +199,7 @@ document.getElementById('btn-leave-lobby').addEventListener('click', async () =>
   if (unsubscribe) unsubscribe();
   roomCode = null;
   latestState = null;
+  previousState = null;
   showScreen('screen-home');
 });
 
@@ -314,6 +329,20 @@ function isCardPlayable(card, state) {
   return false;
 }
 
+// ----------------------------------------------------------------------
+// Mini-kéz: az ellenfél lapjait apró, egymást átfedő téglalapokkal
+// jelenítjük meg (kb. egy betű mérete) – ez ad vizuális "horgonyt" a
+// húzás/lerakás animációknak is.
+// ----------------------------------------------------------------------
+const MINI_HAND_MAX = 10;
+function miniHandHtml(count) {
+  const shown = Math.min(count, MINI_HAND_MAX);
+  let html = '';
+  for (let i = 0; i < shown; i++) html += '<span class="mini-card"></span>';
+  if (count > MINI_HAND_MAX) html += `<span class="mini-overflow">+${count - MINI_HAND_MAX}</span>`;
+  return html;
+}
+
 function renderOpponents(state) {
   const container = document.getElementById('opponents-list');
   container.innerHTML = '';
@@ -328,11 +357,14 @@ function renderOpponents(state) {
   for (const p of order) {
     const chip = document.createElement('div');
     chip.className = 'opponent-chip';
+    chip.dataset.id = p.id;
     const idx = players.indexOf(p);
     if (idx === state.currentPlayerIndex) chip.classList.add('active-turn');
     const handLen = (state.hands[p.id] || []).length;
 
-    let html = `<div class="name">${escapeHtml(p.name)}</div><div class="count">${handLen} lap</div>`;
+    let html = `<div class="name">${escapeHtml(p.name)}</div>`;
+    html += `<div class="mini-hand">${miniHandHtml(handLen)}</div>`;
+    html += `<div class="count">${handLen} lap</div>`;
     if (!p.connected) html += '<div class="offline-tag">lecsatlakozott</div>';
     chip.innerHTML = html;
 
@@ -352,6 +384,107 @@ function renderOpponents(state) {
       chip.appendChild(catchBtn);
     }
     container.appendChild(chip);
+  }
+}
+
+// ----------------------------------------------------------------------
+// Animációk – lap lerakás / húzás vizuális visszajelzése
+// ----------------------------------------------------------------------
+
+// Lebegő felirat ("+2 lap") egy elem fölött
+function spawnFloatBadge(text, rect) {
+  if (prefersReducedMotion()) return;
+  const el = document.createElement('div');
+  el.className = 'float-badge';
+  el.textContent = text;
+  el.style.left = (rect.left + rect.width / 2) + 'px';
+  el.style.top = rect.top + 'px';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => el.remove(), 1000);
+}
+
+// Repülő "szellem" lap egyik képernyőpontból a másikba
+function spawnGhostCard(fromRect, toRect, opts = {}) {
+  if (prefersReducedMotion()) return;
+  const ghost = document.createElement('div');
+  ghost.className = 'ghost-card';
+  if (opts.card) {
+    ghost.style.background = cardBackground(opts.card);
+  } else {
+    ghost.classList.add('ghost-card-back');
+  }
+  ghost.style.left = fromRect.left + 'px';
+  ghost.style.top = fromRect.top + 'px';
+  ghost.style.width = fromRect.width + 'px';
+  ghost.style.height = fromRect.height + 'px';
+  document.body.appendChild(ghost);
+
+  requestAnimationFrame(() => {
+    const dx = (toRect.left + toRect.width / 2) - (fromRect.left + fromRect.width / 2);
+    const dy = (toRect.top + toRect.height / 2) - (fromRect.top + fromRect.height / 2);
+    const scale = Math.max(0.2, toRect.width / fromRect.width) * (opts.shrink ? 0.4 : 1);
+    ghost.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+    ghost.style.opacity = opts.fadeOut === false ? '0.9' : '0.15';
+  });
+  setTimeout(() => ghost.remove(), 550);
+}
+
+// Megnézi, mely lapok újak `nextHand`-ben `prevHand`-hez képest (multiset
+// diff), hogy csak a frissen húzott lapokra kerüljön "becsúszás" animáció.
+function diffNewCards(prevHand, nextHand) {
+  const counts = {};
+  for (const c of (prevHand || [])) counts[c] = (counts[c] || 0) + 1;
+  return nextHand.map((c) => {
+    if (counts[c] > 0) { counts[c]--; return false; }
+    return true;
+  });
+}
+
+// Az előző és az új állapot összevetése alapján elindítja az asztalhoz /
+// ellenfelekhez kötődő animációkat. Csak akkor fut, ha mindkét állapot
+// "playing" volt – tehát nem új kör indulásakor vagy belépéskor.
+function animateTableChanges(prev, next) {
+  if (prefersReducedMotion()) return;
+  if (!prev || prev.status !== 'playing' || next.status !== 'playing') return;
+
+  // Dobott lap "landolása"
+  if (next.discard.length !== prev.discard.length) {
+    const discardEl = document.getElementById('discard-pile');
+    discardEl.classList.remove('discard-landing');
+    // egy frame késleltetés, hogy az osztály újra triggerelje az animációt
+    requestAnimationFrame(() => discardEl.classList.add('discard-landing'));
+  }
+
+  const drawRect = document.getElementById('draw-pile').getBoundingClientRect();
+  const discardRect = document.getElementById('discard-pile').getBoundingClientRect();
+  const topCard = next.discard[next.discard.length - 1];
+  const activePlayer = prev.players[prev.currentPlayerIndex];
+  const activePlayerId = activePlayer ? activePlayer.id : null;
+
+  for (const p of next.players) {
+    if (p.id === myId) continue; // a saját kéznél a kártyák közvetlenül látszanak
+    const prevLen = (prev.hands[p.id] || []).length;
+    const nextLen = (next.hands[p.id] || []).length;
+    const diff = nextLen - prevLen;
+    if (diff === 0) continue;
+
+    const chip = document.querySelector(`.opponent-chip[data-id="${CSS.escape(p.id)}"]`);
+    if (!chip) continue;
+    const chipRect = chip.getBoundingClientRect();
+
+    if (diff > 0) {
+      // húzott lap(ok): pár "szellem" lap repül a pakliból, + felirat
+      spawnFloatBadge(`+${diff} lap`, chipRect);
+      const count = Math.min(diff, 3);
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => spawnGhostCard(drawRect, chipRect, { shrink: true }), i * 90);
+      }
+    } else if (diff < 0 && p.id === activePlayerId) {
+      // lerakott lap: a most kijátszó ellenfél felől repül a dobott lap helyére,
+      // a frissen dobott lap színében
+      spawnGhostCard(chipRect, discardRect, { card: topCard, fadeOut: false });
+    }
   }
 }
 
@@ -426,9 +559,16 @@ function renderGame(state) {
   // Kezem
   document.getElementById('my-name-label').textContent = 'A kezed';
   document.getElementById('my-hand-count').textContent = `${myHand.length} lap`;
+
+  // Melyik lapok újak a legutóbbi húzás óta -> "becsúszás" animáció
+  let newFlags = null;
+  if (previousState && previousState.status === 'playing' && state.status === 'playing' && !prefersReducedMotion()) {
+    newFlags = diffNewCards(previousState.hands[myId] || [], myHand);
+  }
+
   const handEl = document.getElementById('hand-container');
   handEl.innerHTML = '';
-  for (const card of myHand) {
+  myHand.forEach((card, index) => {
     const el = document.createElement('div');
     el.className = 'card card-' + cardColor(card);
     el.innerHTML = cardInnerHtml(card);
@@ -437,9 +577,10 @@ function renderGame(state) {
     if (forced) el.classList.add('forced');
     else if (playable) el.classList.add('playable');
     else el.classList.add('disabled');
+    if (newFlags && newFlags[index]) el.classList.add('card-enter');
     el.addEventListener('click', () => onCardClick(card, state));
     handEl.appendChild(el);
-  }
+  });
 }
 
 function onCardClick(card, state) {
@@ -599,6 +740,7 @@ function render() {
   } else if (latestState.status === 'playing') {
     showScreen('screen-game');
     renderGame(latestState);
+    animateTableChanges(previousState, latestState);
   } else {
     showScreen('screen-end');
     renderEnd(latestState);
