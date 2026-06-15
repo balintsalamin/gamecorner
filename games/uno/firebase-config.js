@@ -14,13 +14,13 @@
 // Firestore Security Rules adja (lásd README), nem ez a fájl.
 // ============================================================================
 
-export const firebaseConfig = {
-  apiKey: 'IDE_MASOLD_AZ_API_KEY-T',
-  authDomain: 'PROJEKT_ID.firebaseapp.com',
-  projectId: 'PROJEKT_ID',
-  storageBucket: 'PROJEKT_ID.appspot.com',
-  messagingSenderId: 'IDE_A_SENDER_ID',
-  appId: 'IDE_AZ_APP_ID',
+const firebaseConfig = {
+  apiKey: "AIzaSyDjxWmXmbTX4UMbgYkq1IXZY41vMPoSqRg",
+  authDomain: "gamecorner-3e716.firebaseapp.com",
+  projectId: "gamecorner-3e716",
+  storageBucket: "gamecorner-3e716.firebasestorage.app",
+  messagingSenderId: "169802293526",
+  appId: "1:169802293526:web:2a30997c7e6a002105f037"
 };
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
