@@ -20,17 +20,18 @@ const ACTION_VALUES = ['skip', 'reverse', 'draw2'];
 // ----------------------------------------------------------------------
 export const DEFAULT_SETTINGS = {
   startingHandSize: 7,
-  stackDrawTwo: true,
-  stackDrawFour: true,
-  crossStack: true,
+  stackDrawTwo: false,
+  stackDrawFour: false,
+  crossStack: false,
   jumpIn: false,
   sevenZero: false,
   drawUntilPlayable: false,
   mustPlayDrawn: false,
-  drawFourChallenge: false,
+  drawFourChallenge: true,
   unoPenalty: 2,
   scoringMode: 'single',
   targetScore: 500,
+  customDrawCards: [],   // [{ amount: 6, copies: 2 }, ...]
 };
 
 export const SETTINGS_META = [
@@ -76,12 +77,18 @@ export const SETTINGS_META = [
   },
   {
     key: 'scoringMode', label: 'Játékmód', type: 'select',
-    options: [['single', 'Egy kör – az nyer, aki előbb kiürül'], ['target', 'Pontverseny – körök egy céllétszámig']],
+    options: [['single', 'Egy kör (ki kiürül, nyer)'], ['target', 'Pontverseny (cél pontig)']],
   },
   {
     key: 'targetScore', label: 'Cél pontszám', type: 'number', min: 50, max: 1000, step: 50,
     hint: 'Pontverseny módban eddig a pontszámig mennek a körök.',
     showIf: (s) => s.scoringMode === 'target',
+  },
+  {
+    key: 'customDrawCards',
+    label: 'Egyéni húzós lapok',
+    type: 'drawCardsList',
+    hint: 'Extra vad lapok: a következő játékosnak annyit kell húznia, amennyi be van állítva. Megadható, hány példány kerüljön a pakliba (ritkaság).',
   },
 ];
 
@@ -98,6 +105,14 @@ export function cardValue(card) {
 export function isWildCard(card) {
   return cardColor(card) === 'wild';
 }
+// Egyéni húzós lapok: "wild-cdrawN" formátum (pl. "wild-cdraw6")
+export function isCustomDrawCard(card) {
+  return cardColor(card) === 'wild' && cardValue(card).startsWith('cdraw');
+}
+export function customDrawAmount(card) {
+  const v = cardValue(card);
+  return v.startsWith('cdraw') ? Number(v.slice(5)) : 0;
+}
 export function cardPoints(card) {
   const v = cardValue(card);
   if (/^[0-9]$/.test(v)) return Number(v);
@@ -105,7 +120,7 @@ export function cardPoints(card) {
   return 50; // wild / wild draw four
 }
 
-export function createDeck() {
+export function createDeck(settings) {
   const deck = [];
   for (const color of COLORS) {
     deck.push(`${color}-0`);
@@ -118,6 +133,18 @@ export function createDeck() {
   }
   for (let i = 0; i < 4; i++) {
     deck.push('wild-wild', 'wild-draw4');
+  }
+  // Egyéni húzós lapok hozzáadása
+  if (settings && Array.isArray(settings.customDrawCards)) {
+    for (const entry of settings.customDrawCards) {
+      const amount = Number(entry.amount);
+      const copies = Number(entry.copies);
+      if (amount >= 1 && copies >= 1) {
+        for (let i = 0; i < copies; i++) {
+          deck.push(`wild-cdraw${amount}`);
+        }
+      }
+    }
   }
   return deck;
 }
@@ -147,8 +174,14 @@ export function isValidPlay(card, state, settings) {
 
   if (state.drawStack > 0) {
     const topValue = cardValue(top);
+    const topIsCustom = topValue.startsWith('cdraw');
     const isD2 = value === 'draw2';
     const isD4 = value === 'draw4';
+    const isCustom = value.startsWith('cdraw');
+
+    // Egyéni húzós lap tetején csak egyéni húzós lap rakható
+    if (topIsCustom) return isCustom;
+
     if (topValue === 'draw2') {
       if (isD2 && settings.stackDrawTwo) return true;
       if (isD4 && settings.stackDrawFour && settings.crossStack) return true;
@@ -247,7 +280,7 @@ function startRound(stateIn) {
   const n = state.players.length;
   if (n < 2) throw new Error('Legalább 2 játékos kell a kezdéshez.');
 
-  let deck = shuffle(createDeck());
+  let deck = shuffle(createDeck(settings));
   const hands = {};
   for (const p of state.players) {
     hands[p.id] = deck.splice(0, settings.startingHandSize);
@@ -255,7 +288,7 @@ function startRound(stateIn) {
 
   let first;
   do {
-    if (deck.length === 0) deck = shuffle(createDeck());
+    if (deck.length === 0) deck = shuffle(createDeck(settings));
     first = deck.pop();
     if (cardValue(first) === 'draw4') {
       deck.unshift(first);
@@ -363,6 +396,9 @@ function applyPlay(stateIn, action) {
   } else if (value === 'draw4') {
     state.drawStack += 4;
     state.lastWild4 = { playerId, priorColor };
+  } else if (value.startsWith('cdraw')) {
+    // Egyéni húzós lap
+    state.drawStack += Number(value.slice(5));
   } else if (value === '0' && settings.sevenZero) {
     rotateHands(state);
   } else if (value === '7' && settings.sevenZero) {
@@ -374,7 +410,7 @@ function applyPlay(stateIn, action) {
     state.hands[sevenTarget] = tmp;
   }
 
-  if (value !== 'draw2' && value !== 'draw4') {
+  if (value !== 'draw2' && value !== 'draw4' && !value.startsWith('cdraw')) {
     state.lastWild4 = null;
   }
 
@@ -401,6 +437,7 @@ function describeCard(card) {
   const colorNames = { red: 'piros', yellow: 'sárga', green: 'zöld', blue: 'kék', wild: 'vad' };
   const valueNames = { skip: 'kihagyás', reverse: 'irányváltás', draw2: '+2', wild: 'szín-választó', draw4: '+4 szín-választó' };
   const c = colorNames[color] || color;
+  if (value.startsWith('cdraw')) return `${c} +${value.slice(5)} szín-választó`;
   const v = valueNames[value] || value;
   return `${c} ${v}`;
 }
