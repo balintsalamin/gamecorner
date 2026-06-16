@@ -759,6 +759,68 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
     margin: 0 auto;
   }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Dev mód – lebegő gomb és panel                                          */
+/* ---------------------------------------------------------------------- */
+#dev-btn {
+  position: fixed;
+  bottom: 68px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 150;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+#dev-btn:active { transform: scale(0.9); }
+
+#dev-panel {
+  position: fixed;
+  bottom: 112px;
+  right: 16px;
+  background: var(--surface);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  min-width: 220px;
+  z-index: 149;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+}
+#dev-panel h3 {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+#dev-panel .btn {
+  font-size: 0.85rem;
+  padding: 9px 12px;
+  margin-top: 6px;
+  width: 100%;
+}
+.dev-bot-status {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 10px;
+  line-height: 1.45;
+  border-top: 1px solid var(--surface-3);
+  padding-top: 8px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .screen.active { animation: none; }
   .hand-container .card.forced { animation: none; }
