@@ -608,8 +608,157 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
 }
 
 /* ---------------------------------------------------------------------- */
-/* Reduced motion                                                           */
+/* Egyéni húzós lapok widget                                               */
 /* ---------------------------------------------------------------------- */
+.draw-cards-list { margin-top: 8px; }
+.draw-cards-empty { color: var(--text-dim); font-size: 0.85rem; margin: 4px 0 8px; }
+
+.draw-card-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.draw-card-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.draw-card-num {
+  width: 54px;
+  padding: 5px 7px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--surface-3);
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;
+}
+.btn-icon-remove {
+  margin-left: auto;
+  background: rgba(230, 57, 70, 0.18);
+  color: var(--uno-red);
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-icon-remove:active { opacity: 0.7; }
+.draw-cards-add { margin-top: 4px; width: 100%; }
+
+/* ---------------------------------------------------------------------- */
+/* Reszponzív: tablet / asztali                                            */
+/* ---------------------------------------------------------------------- */
+
+/* ── Közepes képernyő (≥ 600 px) ── */
+@media (min-width: 600px) {
+  body {
+    padding: 24px 28px 40px;
+    max-width: 820px;
+  }
+
+  /* Lobbi: settings két oszlopban */
+  .settings-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  /* Egyéni húzós lapok teljes szélességben */
+  .settings-panel .setting-row:last-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Ellenfél kártyák rács */
+  .opponents-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    overflow-x: unset;
+  }
+
+  .card {
+    width: 72px;
+    height: 104px;
+    font-size: 1.8rem;
+  }
+
+  .hand-container { gap: 10px; }
+
+  .table-area { padding: 22px 24px; }
+}
+
+/* ── Nagy képernyő (≥ 960 px) – oldalsáv elrendezés ── */
+@media (min-width: 960px) {
+  body {
+    max-width: 1120px;
+    padding: 28px 40px 40px;
+  }
+
+  /* Játék képernyő: kétpaneles */
+  .game-wrap {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto auto 1fr auto auto auto;
+    grid-template-areas:
+      "topbar  topbar"
+      "sidebar table"
+      "sidebar actions"
+      "sidebar log"
+      "sidebar hand";
+    gap: 12px;
+    align-items: start;
+  }
+
+  .game-topbar  { grid-area: topbar; }
+  .table-area   { grid-area: table; }
+  .action-row,
+  #btn-force-skip { grid-area: actions; }
+  .game-log     { grid-area: log; }
+  .hand-wrap    { grid-area: hand; }
+
+  /* Oldalsáv: ellenfelek + log egymás alatt */
+  .opponents-list {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    overflow-x: unset;
+    gap: 8px;
+    align-self: start;
+  }
+
+  .opponent-chip {
+    width: 100%;
+    min-width: unset;
+    text-align: left;
+    padding: 10px 14px;
+  }
+
+  /* Nagyobb kézben lévő kártyák */
+  .hand-container .card {
+    width: 80px;
+    height: 114px;
+    font-size: 2rem;
+  }
+
+  /* Lobbi settings három oszlopban */
+  .settings-panel {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .settings-panel .setting-row:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .card-panel {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .screen.active { animation: none; }
   .hand-container .card.forced { animation: none; }
