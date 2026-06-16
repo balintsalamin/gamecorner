@@ -64,7 +64,9 @@ function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 const VALUE_DISPLAY = { skip: '⊘', reverse: '⇄', draw2: '+2', wild: '★', draw4: '+4' };
 function displayValue(value) {
-  return VALUE_DISPLAY[value] !== undefined ? VALUE_DISPLAY[value] : value;
+  if (VALUE_DISPLAY[value] !== undefined) return VALUE_DISPLAY[value];
+  if (value.startsWith('cdraw')) return '+' + value.slice(5);
+  return value;
 }
 function cardInnerHtml(card) {
   const text = displayValue(cardValue(card));
@@ -261,6 +263,102 @@ function renderSettingsPanel(settings) {
         control.appendChild(opt);
       }
       control.addEventListener('change', () => updateSetting(meta.key, control.value));
+    } else if (meta.type === 'drawCardsList') {
+      // Egyéni húzós lapok listája
+      const listWrap = document.createElement('div');
+      listWrap.className = 'draw-cards-list';
+
+      const currentList = Array.isArray(settings.customDrawCards) ? settings.customDrawCards : [];
+
+      const rebuildList = () => {
+        listWrap.innerHTML = '';
+        const fresh = Array.isArray(settings.customDrawCards) ? settings.customDrawCards : [];
+        if (fresh.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'draw-cards-empty';
+          empty.textContent = 'Nincs egyéni húzós lap.';
+          listWrap.appendChild(empty);
+        }
+        fresh.forEach((entry, idx) => {
+          const row = document.createElement('div');
+          row.className = 'draw-card-row';
+
+          const amtLabel = document.createElement('span');
+          amtLabel.className = 'draw-card-label';
+          amtLabel.textContent = 'Húz';
+          row.appendChild(amtLabel);
+
+          const amtInput = document.createElement('input');
+          amtInput.type = 'number';
+          amtInput.min = 1;
+          amtInput.max = 20;
+          amtInput.value = entry.amount;
+          amtInput.className = 'draw-card-num';
+          amtInput.addEventListener('change', () => {
+            const newList = [...(settings.customDrawCards || [])];
+            newList[idx] = { ...newList[idx], amount: Math.min(20, Math.max(1, Number(amtInput.value) || 1)) };
+            updateSetting('customDrawCards', newList);
+          });
+          row.appendChild(amtInput);
+
+          const lapLabel = document.createElement('span');
+          lapLabel.className = 'draw-card-label';
+          lapLabel.textContent = 'lapot –';
+          row.appendChild(lapLabel);
+
+          const copLabel = document.createElement('span');
+          copLabel.className = 'draw-card-label';
+          copLabel.textContent = 'Db a pakliban:';
+          row.appendChild(copLabel);
+
+          const copInput = document.createElement('input');
+          copInput.type = 'number';
+          copInput.min = 1;
+          copInput.max = 8;
+          copInput.value = entry.copies;
+          copInput.className = 'draw-card-num';
+          copInput.addEventListener('change', () => {
+            const newList = [...(settings.customDrawCards || [])];
+            newList[idx] = { ...newList[idx], copies: Math.min(8, Math.max(1, Number(copInput.value) || 1)) };
+            updateSetting('customDrawCards', newList);
+          });
+          row.appendChild(copInput);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'btn-icon-remove';
+          removeBtn.textContent = '✕';
+          removeBtn.title = 'Törlés';
+          removeBtn.addEventListener('click', () => {
+            const newList = [...(settings.customDrawCards || [])];
+            newList.splice(idx, 1);
+            updateSetting('customDrawCards', newList);
+          });
+          row.appendChild(removeBtn);
+
+          listWrap.appendChild(row);
+        });
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-small draw-cards-add';
+        addBtn.textContent = '+ Új típus hozzáadása';
+        addBtn.addEventListener('click', () => {
+          const newList = [...(settings.customDrawCards || []), { amount: 6, copies: 2 }];
+          updateSetting('customDrawCards', newList);
+        });
+        listWrap.appendChild(addBtn);
+      };
+
+      rebuildList();
+      // a control slot-ot nem használjuk, a listWrap kerül közvetlenül a rowba
+      row.appendChild(listWrap);
+      if (meta.hint) {
+        const hint = document.createElement('p');
+        hint.className = 'hint';
+        hint.textContent = meta.hint;
+        row.appendChild(hint);
+      }
+      panel.appendChild(row);
+      continue;
     }
 
     head.appendChild(control);
