@@ -843,6 +843,7 @@ function render() {
     showScreen('screen-end');
     renderEnd(latestState);
   }
+  maybeScheduleBotMoves(latestState);
 }
 
 // ----------------------------------------------------------------------
@@ -854,3 +855,200 @@ window.addEventListener('pagehide', () => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && roomCode) dispatch({ type: 'setConnected', playerId: myId, connected: true }).catch(() => {});
 });
+
+// ============================================================
+// Dev mód – fejlesztői eszközök
+// ============================================================
+
+const activeBots = new Map();   // botId → megjelenítendő név
+const scheduledBots = new Set(); // éppen ütemezett botok (ne duplikálódjon)
+const COLORS_LIST = ['red', 'yellow', 'green', 'blue'];
+
+// Bot: véletlenszerű érvényes lépés összeállítása
+function getBotAction(state, botId) {
+  const players = state.players;
+  const botIdx = players.findIndex(p => p.id === botId);
+  if (botIdx === -1 || botIdx !== state.currentPlayerIndex) return null;
+
+  const hand = state.hands[botId] || [];
+
+  // +4 kihívás – véletlenszerűen, 25% eséllyel
+  if (state.drawStack > 0 && state.lastWild4 && state.settings.drawFourChallenge) {
+    if (Math.random() < 0.25) return { type: 'challenge', playerId: botId };
+  }
+
+  // Kötelező lap lerakása (húzott lap után)
+  if (state.pendingForcedCard) {
+    const card = state.pendingForcedCard;
+    const action = { type: 'play', playerId: botId, card };
+    if (cardColor(card) === 'wild') action.chosenColor = COLORS_LIST[Math.floor(Math.random() * 4)];
+    if (cardValue(card) === '7' && state.settings.sevenZero) {
+      const others = players.filter(p => p.id !== botId);
+      if (others.length) action.sevenTarget = others[Math.floor(Math.random() * others.length)].id;
+    }
+    return action;
+  }
+
+  // Lerakható lapok szűrése, véletlenszerű választás
+  const playable = hand.filter(c => isValidPlay(c, state, state.settings));
+
+  if (playable.length === 0) return { type: 'draw', playerId: botId };
+
+  const card = playable[Math.floor(Math.random() * playable.length)];
+  const action = { type: 'play', playerId: botId, card };
+
+  if (cardColor(card) === 'wild') {
+    action.chosenColor = COLORS_LIST[Math.floor(Math.random() * 4)];
+  }
+  if (cardValue(card) === '7' && state.settings.sevenZero) {
+    const others = players.filter(p => p.id !== botId);
+    if (others.length) action.sevenTarget = others[Math.floor(Math.random() * others.length)].id;
+  }
+
+  return action;
+}
+
+// Ütemezés: ha valamelyik bot következik, késleltetett lépés indítása
+function maybeScheduleBotMoves(state) {
+  if (!state || state.status !== 'playing' || activeBots.size === 0) return;
+
+  for (const [botId] of activeBots) {
+    if (scheduledBots.has(botId)) continue;
+    const botIndex = state.players.findIndex(p => p.id === botId);
+    if (botIndex !== state.currentPlayerIndex) continue;
+
+    scheduledBots.add(botId);
+    const delay = 900 + Math.random() * 1300; // 0.9–2.2 másodperc
+
+    setTimeout(async () => {
+      scheduledBots.delete(botId);
+
+      // Állapot újraolvasása végrehajtás előtt – lehet hogy közben változott
+      const current = latestState;
+      if (!current || current.status !== 'playing') return;
+      const idx = current.players.findIndex(p => p.id === botId);
+      if (idx !== current.currentPlayerIndex) return;
+
+      try {
+        const action = getBotAction(current, botId);
+        if (!action) return;
+        await dispatch(action);
+
+        // ONECARD bemondás – 70% eséllyel (30%-ban "elfelejti", rajtakapható)
+        await new Promise(r => setTimeout(r, 380));
+        const s = latestState;
+        if (s?.hands[botId]?.length === 1 && s.unoCalls?.[botId] === false) {
+          if (Math.random() < 0.7) {
+            await dispatch({ type: 'callUno', playerId: botId }).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.log(`[Bot ${botId}]`, e.message);
+      }
+    }, delay);
+  }
+}
+
+// Dev panel szöveg frissítése az aktív botok alapján
+function updateDevPanel() {
+  const statusEl = document.getElementById('dev-bot-status');
+  if (!statusEl) return;
+  if (activeBots.size === 0) {
+    statusEl.textContent = 'Nincs aktív bot.';
+  } else {
+    statusEl.textContent = `Aktív (${activeBots.size}): ${[...activeBots.values()].join(', ')}`;
+  }
+}
+
+// Dev mód inicializálása – lefut egyszer oldalbetöltéskor
+function initDevMode() {
+  const isActive = localStorage.getItem('cc_dev_mode') === '1';
+
+  // ── Lebegő gomb ──────────────────────────────────────────
+  const devBtn = document.createElement('button');
+  devBtn.id = 'dev-btn';
+  devBtn.title = 'Dev mód';
+  devBtn.textContent = '🛠️';
+  if (!isActive) devBtn.classList.add('hidden');
+  document.body.appendChild(devBtn);
+
+  // ── Panel ─────────────────────────────────────────────────
+  const devPanel = document.createElement('div');
+  devPanel.id = 'dev-panel';
+  devPanel.classList.add('hidden');
+  devPanel.innerHTML = `
+    <h3>🛠️ Dev mód</h3>
+    <button id="dev-add-bot"   class="btn btn-secondary">🤖 Buta bot hozzáadása</button>
+    <button id="dev-clear-bots" class="btn btn-text">🗑️ Összes bot eltávolítása</button>
+    <div id="dev-bot-status" class="dev-bot-status">Nincs aktív bot.</div>
+  `;
+  document.body.appendChild(devPanel);
+
+  // ── Gomb: panel megnyitása/bezárása ───────────────────────
+  devBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    devPanel.classList.toggle('hidden');
+  });
+  // Kattintás kívül → zárja be a panelt
+  document.addEventListener('click', () => devPanel.classList.add('hidden'));
+  devPanel.addEventListener('click', e => e.stopPropagation());
+
+  // ── Bot hozzáadása ────────────────────────────────────────
+  document.getElementById('dev-add-bot').addEventListener('click', async () => {
+    if (!roomCode) {
+      showToast('Előbb csatlakozz egy szobához!');
+      return;
+    }
+    if (latestState?.status !== 'lobby') {
+      showToast('Csak lobbiban lehet botot hozzáadni.');
+      return;
+    }
+    if (activeBots.size >= 5) {
+      showToast('Maximum 5 bot adható hozzá.');
+      return;
+    }
+    const n = activeBots.size + 1;
+    const name = `🤖 Bot ${n}`;
+    const id = 'bot-' + Math.random().toString(36).slice(2, 8);
+    try {
+      await dispatch({ type: 'join', playerId: id, name });
+      activeBots.set(id, name);
+      updateDevPanel();
+      showToast(`${name} csatlakozott a szobához.`);
+    } catch (e) {
+      showToast('Bot hozzáadása sikertelen: ' + e.message);
+    }
+  });
+
+  // ── Botok eltávolítása ────────────────────────────────────
+  document.getElementById('dev-clear-bots').addEventListener('click', async () => {
+    for (const [id] of activeBots) {
+      try { await dispatch({ type: 'leave', playerId: id }); } catch (e) { /* mindegy */ }
+    }
+    activeBots.clear();
+    scheduledBots.clear();
+    updateDevPanel();
+    showToast('Összes bot eltávolítva.');
+    devPanel.classList.add('hidden');
+  });
+
+  // ── Titkos aktiválás: cím 10× kattintás ──────────────────
+  let clickCount = 0;
+  let clickTimer = null;
+  const titleEl = document.querySelector('#screen-home .title');
+  if (titleEl) {
+    titleEl.addEventListener('click', () => {
+      clickCount++;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => { clickCount = 0; }, 2500);
+      if (clickCount >= 10) {
+        clickCount = 0;
+        localStorage.setItem('cc_dev_mode', '1');
+        devBtn.classList.remove('hidden');
+        showToast('🛠️ Dev mód aktiválva!');
+      }
+    });
+  }
+}
+
+initDevMode();
