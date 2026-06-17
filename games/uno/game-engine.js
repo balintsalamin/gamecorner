@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
   sevenZero: false,
   drawUntilPlayable: false,
   mustPlayDrawn: false,
-  drawFourChallenge: true,
+  drawFourChallenge: false,
   unoPenalty: 2,
   multiPlay: false,
   scoringMode: 'single',
