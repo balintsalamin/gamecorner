@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS = {
   mustPlayDrawn: false,
   drawFourChallenge: true,
   unoPenalty: 2,
+  multiPlay: false,
   scoringMode: 'single',
   targetScore: 500,
   customDrawCards: [],   // [{ amount: 6, copies: 2 }, ...]
@@ -74,6 +75,10 @@ export const SETTINGS_META = [
   {
     key: 'unoPenalty', label: 'Büntetőlapok elfelejtett UNO-ért', type: 'number', min: 0, max: 6,
     hint: 'Ha valaki 1 lapnál nem mond UNO-t, és más rajtakapja, ennyi lapot kell húznia.',
+  },
+  {
+    key: 'multiPlay', label: 'Több egyforma szám egyszerre', type: 'bool',
+    hint: 'Ugyanolyan számú lapokból (pl. három 5-ös) egyszerre több is lerakható. Akció lapok és vad lapok nem kombinálhatók.',
   },
   {
     key: 'scoringMode', label: 'Játékmód', type: 'select',
@@ -325,6 +330,65 @@ function startRound(stateIn) {
 
   state.status = 'playing';
   state.log = pushLog(state.log, 'Új kör kezdődik – jó játékot!');
+  return state;
+}
+
+// ----------------------------------------------------------------------
+// Több ugyanolyan számú lap egyszerre (multi-play)
+// ----------------------------------------------------------------------
+function applyPlayMultiple(stateIn, action) {
+  const { playerId, cards } = action;
+  if (!Array.isArray(cards) || cards.length < 2) {
+    throw new Error('Legalább 2 lapot kell megadni egyszerre lerakáshoz.');
+  }
+
+  const players = stateIn.players;
+  const n = players.length;
+  const playerIndex = players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) throw new Error('Ismeretlen játékos.');
+  if (playerIndex !== stateIn.currentPlayerIndex) throw new Error('Most nem te jössz.');
+  if (stateIn.drawStack > 0) throw new Error('Húzós lapra nem lehet több lapot egyszerre lerakni.');
+  if (stateIn.pendingForcedCard) throw new Error('Előbb le kell rakni a húzott lapot.');
+
+  const firstValue = cardValue(cards[0]);
+  if (!/^[0-9]$/.test(firstValue)) {
+    throw new Error('Egyszerre csak számkártyákat (0-9) lehet lerakni.');
+  }
+  if (stateIn.settings.sevenZero && (firstValue === '7' || firstValue === '0')) {
+    throw new Error('A 7/0 szabály miatt ezt a számot nem lehet egyszerre több lappal lerakni.');
+  }
+  for (const c of cards) {
+    if (cardColor(c) === 'wild') throw new Error('Vad lapokat nem lehet egyszerre lerakni.');
+    if (cardValue(c) !== firstValue) throw new Error('Minden lapnak ugyanolyan számúnak kell lennie.');
+  }
+
+  if (!isValidPlay(cards[0], stateIn, stateIn.settings)) {
+    throw new Error('Ez a lap most nem rakható le.');
+  }
+
+  const state = structuredClone(stateIn);
+  const hand = [...state.hands[playerId]];
+  for (const c of cards) {
+    const idx = hand.indexOf(c);
+    if (idx === -1) throw new Error('Ez a lap nincs a kezedben.');
+    hand.splice(idx, 1);
+  }
+  state.hands[playerId] = hand;
+
+  for (const c of cards) state.discard.push(c);
+  state.currentColor = cardColor(cards[cards.length - 1]);
+  state.lastWild4 = null;
+
+  if (hand.length === 1) {
+    state.unoCalls[playerId] = false;
+  } else {
+    delete state.unoCalls[playerId];
+  }
+
+  if (hand.length === 0) return finishRound(state, playerId);
+
+  state.currentPlayerIndex = nextIndex(playerIndex, state.direction, n, 1);
+  state.log = pushLog(state.log, `${nameOf(players, playerId)} lerakott ${cards.length}× ${firstValue}-est egyszerre.`);
   return state;
 }
 
@@ -649,6 +713,9 @@ export function applyMove(stateIn, action) {
       state.dealerIndex = ((state.dealerIndex || 0) + 1) % n;
       return startRound(state);
     }
+
+    case 'playMultiple':
+      return applyPlayMultiple(stateIn, action);
 
     case 'play':
       return applyPlay(stateIn, action);
