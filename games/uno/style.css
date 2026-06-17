@@ -360,7 +360,7 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   font-weight: 700;
   font-size: 1.6rem;
   color: #fff;
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.45);
   flex-shrink: 0;
   box-shadow: 0 3px 8px rgba(0,0,0,0.3);
   user-select: none;
@@ -429,7 +429,10 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   background: var(--surface);
   border-radius: var(--radius);
   padding: 12px;
+  padding-top: 0; /* padding-top comes from hand-container */
   overflow: visible;
+  position: relative; /* stacking context so lifted cards appear above game-log */
+  z-index: 1;
 }
 .hand-label-row {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -440,6 +443,8 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  overflow-y: visible;
+  padding-top: 16px;
   padding-bottom: 6px;
   min-height: 100px;
 }
@@ -452,7 +457,6 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
 .hand-container.overlapping {
   gap: 0;
   overflow: visible;
-  padding-top: 16px;
   padding-bottom: 18px;
   flex-wrap: nowrap;
 }
@@ -469,6 +473,8 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
 }
 .hand-container .card.playable:active { transform: translateY(-6px); }
 .hand-container .card.disabled { opacity: 0.45; }
+/* Multi-play: lapok amik nem adhatók a kijelöléshez (kevésbé agresszív) */
+.hand-container .card.cant-select { opacity: 0.55; filter: saturate(0.5); }
 .hand-container .card.forced {
   box-shadow: 0 0 0 3px var(--uno-red), 0 3px 8px rgba(0,0,0,0.3);
   animation: pulse 1s infinite;
