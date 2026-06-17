@@ -688,16 +688,19 @@ function renderGame(state) {
     } else if (isSelected) {
       el.classList.add('selected');
     } else if (playable) {
-      // Multi-play módban, ha már van kijelölés, csak az egyező értékűek aktívak
+      // Multi-play kijelölés közben a nem egyező értékű lapok halványítva
       if (state.settings.multiPlay && selValue !== null && cardValue(card) !== selValue) {
-        el.classList.add('disabled');
+        el.classList.add('cant-select');
       } else {
         el.classList.add('playable');
       }
     } else {
-      // Multi-play módban a kijelölt értékkel egyező, de önmagában nem rakható lapok is hozzáadhatók
+      // Multi-play módban a kijelölt értékkel egyező lapok hozzáadhatók
       if (state.settings.multiPlay && isMyTurn && selValue !== null && cardValue(card) === selValue) {
         el.classList.add('playable');
+      } else if (state.settings.multiPlay && isMyTurn && selValue !== null) {
+        // Van kijelölés, ez nem egyezik – halvány
+        el.classList.add('cant-select');
       } else {
         el.classList.add('disabled');
       }
