@@ -23,6 +23,7 @@ let latestState = null;
 let previousState = null;
 let unsubscribe = null;
 let pendingPlay = null; // { card } – amíg a szín- vagy 7-es modál nyitva van
+let selectedCards = []; // multi-play kijelölés
 
 // ----------------------------------------------------------------------
 // Segédfüggvények
@@ -654,6 +655,9 @@ function renderGame(state) {
   }
   logEl.scrollTop = logEl.scrollHeight;
 
+  // Ha nem az én köröm, töröljük a kijelölést
+  if (selectedCards.length > 0 && !isMyTurn) selectedCards = [];
+
   // Kezem
   document.getElementById('my-name-label').textContent = 'A kezed';
   document.getElementById('my-hand-count').textContent = `${myHand.length} lap`;
@@ -666,23 +670,136 @@ function renderGame(state) {
 
   const handEl = document.getElementById('hand-container');
   handEl.innerHTML = '';
+
+  // Multi-play: melyik értéket jelöltük ki (ha van)
+  const selValue = selectedCards.length > 0 ? cardValue(selectedCards[0]) : null;
+
   myHand.forEach((card, index) => {
     const el = document.createElement('div');
     el.className = 'card card-' + cardColor(card);
     el.innerHTML = cardInnerHtml(card);
+
     const forced = isMyTurn && state.pendingForcedCard === card;
     const playable = isCardPlayable(card, state);
-    if (forced) el.classList.add('forced');
-    else if (playable) el.classList.add('playable');
-    else el.classList.add('disabled');
+    const isSelected = selectedCards.includes(card);
+
+    if (forced) {
+      el.classList.add('forced');
+    } else if (isSelected) {
+      el.classList.add('selected');
+    } else if (playable) {
+      // Multi-play módban, ha már van kijelölés, csak az egyező értékűek aktívak
+      if (state.settings.multiPlay && selValue !== null && cardValue(card) !== selValue) {
+        el.classList.add('disabled');
+      } else {
+        el.classList.add('playable');
+      }
+    } else {
+      // Multi-play módban a kijelölt értékkel egyező, de önmagában nem rakható lapok is hozzáadhatók
+      if (state.settings.multiPlay && isMyTurn && selValue !== null && cardValue(card) === selValue) {
+        el.classList.add('playable');
+      } else {
+        el.classList.add('disabled');
+      }
+    }
+
     if (newFlags && newFlags[index]) el.classList.add('card-enter');
+    el.style.zIndex = isSelected ? 90 : index + 1;
     el.addEventListener('click', () => onCardClick(card, state));
     handEl.appendChild(el);
   });
+
+  // Multi-play megerősítő gomb dinamikusan
+  let multiPlayBtn = document.getElementById('btn-multi-play');
+  if (!multiPlayBtn) {
+    multiPlayBtn = document.createElement('button');
+    multiPlayBtn.id = 'btn-multi-play';
+    multiPlayBtn.className = 'btn btn-primary';
+    document.querySelector('.hand-wrap').appendChild(multiPlayBtn);
+    multiPlayBtn.addEventListener('click', () => playSelectedCards(latestState));
+  }
+  if (state.settings.multiPlay && isMyTurn && selectedCards.length > 0) {
+    multiPlayBtn.textContent = `Lerakás (${selectedCards.length} lap) ▶`;
+    multiPlayBtn.classList.remove('hidden');
+  } else {
+    multiPlayBtn.classList.add('hidden');
+  }
+
+  // Overlap elrendezés kiszámítása a tényleges renderelt méretek alapján
+  requestAnimationFrame(() => applyHandOverlap(handEl, myHand.length));
 }
 
 function onCardClick(card, state) {
   if (state.status !== 'playing') return;
+
+  if (!state.settings.multiPlay) {
+    // Normál egylapos lerakás
+    executeCardPlay(card, state);
+    return;
+  }
+
+  // Multi-play mód
+  const myIndex = state.players.findIndex(p => p.id === myId);
+  const isMyTurn = myIndex === state.currentPlayerIndex;
+
+  // Ha nem az én köröm (pl. jump-in), azonnal rakjuk le
+  if (!isMyTurn) {
+    executeCardPlay(card, state);
+    return;
+  }
+
+  // Kijelölt lap visszavonása
+  const existingIdx = selectedCards.indexOf(card);
+  if (existingIdx !== -1) {
+    selectedCards.splice(existingIdx, 1);
+    renderGame(latestState);
+    return;
+  }
+
+  if (selectedCards.length === 0) {
+    // Első lap kijelölése – legyen lerakható
+    if (!isCardPlayable(card, state)) { showToast('Ez a lap most nem rakható le.'); return; }
+    const v = cardValue(card);
+    const c = cardColor(card);
+    // Vad és akció lapok azonnal kerülnek lerakásra (nem multi-play-elhetők)
+    if (c === 'wild' || !(/^[0-9]$/.test(v))) {
+      executeCardPlay(card, state);
+      return;
+    }
+    selectedCards.push(card);
+    renderGame(latestState);
+  } else {
+    // Lap hozzáadása a kijelöléshez – csak azonos szám jöhet
+    const selValue = cardValue(selectedCards[0]);
+    if (cardValue(card) !== selValue) {
+      showToast(`Csak ${selValue}-eseket adhatsz hozzá. Erősítsd meg, vagy vond vissza a kijelölést.`);
+      return;
+    }
+    selectedCards.push(card);
+    renderGame(latestState);
+  }
+}
+
+// Egyszerre több kijelölt lap lerakása
+async function playSelectedCards(state) {
+  if (!state || selectedCards.length === 0) return;
+  if (selectedCards.length === 1) {
+    const card = selectedCards[0];
+    selectedCards = [];
+    executeCardPlay(card, state);
+    return;
+  }
+  const cards = [...selectedCards];
+  selectedCards = [];
+  try {
+    await dispatch({ type: 'playMultiple', playerId: myId, cards });
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+// Egyetlen lap tényleges lerakása (color modal / seven modal / közvetlen)
+function executeCardPlay(card, state) {
   if (!isCardPlayable(card, state)) {
     showToast('Ez a lap most nem rakható le.');
     return;
@@ -699,6 +816,43 @@ function onCardClick(card, state) {
     sendPlay(card, {});
   }
 }
+
+// Kéz overlap layout – requestAnimationFrame után hívjuk, hogy legyen offsetWidth
+function applyHandOverlap(el, count) {
+  if (count <= 1) {
+    el.classList.remove('overlapping');
+    el.style.removeProperty('--card-step');
+    el.style.removeProperty('--card-w');
+    return;
+  }
+  const firstCard = el.querySelector('.card');
+  if (!firstCard) return;
+  const cardW = firstCard.offsetWidth;
+  const containerW = el.offsetWidth;
+  if (!containerW || !cardW) return;
+
+  const naturalWidth = count * cardW + (count - 1) * 8;
+  if (naturalWidth <= containerW) {
+    el.classList.remove('overlapping');
+    el.style.removeProperty('--card-step');
+    el.style.removeProperty('--card-w');
+    return;
+  }
+
+  const minVisible = 22; // minimum látható szélesség laponként
+  const step = Math.max(minVisible, Math.floor((containerW - cardW) / (count - 1)));
+  el.classList.add('overlapping');
+  el.style.setProperty('--card-w', cardW + 'px');
+  el.style.setProperty('--card-step', step + 'px');
+}
+
+// Ablak átméretezésekor frissítjük az overlapet
+window.addEventListener('resize', () => {
+  const handEl = document.getElementById('hand-container');
+  if (handEl && latestState?.hands[myId]) {
+    requestAnimationFrame(() => applyHandOverlap(handEl, latestState.hands[myId].length));
+  }
+});
 
 async function sendPlay(card, extra) {
   try { await dispatch({ type: 'play', playerId: myId, card, ...extra }); }
