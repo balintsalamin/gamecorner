@@ -13,718 +13,936 @@
     .overlay {
       position: fixed; inset: 0; z-index: 20;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(8,12,30,0.93);
+      background: rgba(8,12,30,0.94);
     }
     .overlay.hidden { display: none; }
     .bigicon { font-size: 3.5rem; line-height: 1; margin-bottom: 14px; }
-    .title { font-family: 'Fredoka', sans-serif; font-size: clamp(2.4rem,5vw,3.6rem); font-weight: 700; color: #ffd166; }
+    .gtitle { font-family: 'Fredoka', sans-serif; font-size: clamp(2.4rem,5vw,3.6rem); font-weight: 700; color: #ffd166; }
     .sub { color: #7777aa; margin-top: 8px; font-size: 0.9rem; text-align: center; }
     .ctrlbox {
       display: grid; grid-template-columns: 1fr 1fr; gap: 14px 48px;
-      margin: 26px 0; padding: 20px 28px;
-      background: #12142a; border-radius: 14px; border: 1px solid #1e2040;
+      margin: 24px 0; padding: 18px 26px; background: #12142a; border-radius: 14px; border: 1px solid #1e2040;
     }
-    .pcol { display: flex; flex-direction: column; gap: 9px; }
+    .pcol { display: flex; flex-direction: column; gap: 8px; }
     .plbl { font-weight: 600; font-size: 0.88rem; margin-bottom: 2px; }
     .crow { font-size: 0.82rem; color: #bbb; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
     .key { display: inline-block; background: #22243a; border: 1px solid #3a3d5a; border-radius: 5px; padding: 3px 9px; font-size: 0.75rem; color: #9a9abb; white-space: nowrap; }
-    .btn { padding: 13px 44px; border: none; border-radius: 999px; font-size: 1.05rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: transform 0.1s; letter-spacing: 0.2px; }
+    .btn { padding: 12px 42px; border: none; border-radius: 999px; font-size: 1.05rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: transform 0.1s; }
     .btn:active { transform: scale(0.96); }
-    .btn-blue { background: linear-gradient(135deg,#3a86ff,#1a5ccc); color: #fff; }
+    .btn-blue  { background: linear-gradient(135deg,#3a86ff,#1a5ccc); color: #fff; }
     .btn-ghost { background: transparent; color: #5555aa; border: 1px solid #2a2c45; margin-top: 10px; }
-    .btn-ghost:hover { color: #8888cc; border-color: #44466a; }
-    .winlbl { font-family: 'Fredoka',sans-serif; font-size: clamp(2.2rem,4.5vw,3.2rem); font-weight: 700; }
-    #backLink { position: fixed; top: 14px; left: 14px; z-index: 30; color: #555; text-decoration: none; font-size: 0.85rem; padding: 5px 12px; border: 1px solid #222; border-radius: 8px; background: rgba(0,0,0,0.5); transition: color 0.15s; }
+    .btn-ghost:hover { color: #8888cc; }
+    #backLink { position: fixed; top: 14px; left: 14px; z-index: 30; color: #555; text-decoration: none; font-size: 0.85rem; padding: 5px 12px; border: 1px solid #222; border-radius: 8px; background: rgba(0,0,0,0.5); }
     #backLink:hover { color: #aaa; }
+
+    /* ── CARD PICK ── */
+    #cardScreen { background: rgba(6,8,22,0.97); flex-direction: column; }
+    .card-hdr { text-align: center; }
+    .card-hdr .gtitle { font-size: 1.9rem; color: #fff; }
+    .card-hdr-sub { color: #6666aa; font-size: 0.85rem; margin-top: 6px; }
+    .cards-row { display: flex; gap: 18px; margin: 26px 0 18px; flex-wrap: wrap; justify-content: center; }
+
+    .upg-card {
+      background: #0e1028; border: 2px solid #252742; border-radius: 16px;
+      padding: 26px 18px 22px; width: 175px; min-height: 190px; cursor: pointer;
+      transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+      display: flex; flex-direction: column; align-items: center; gap: 10px; color: #fff;
+      font-family: 'Inter', sans-serif; outline: none;
+    }
+    .upg-card:hover, .upg-card.focused {
+      transform: translateY(-10px);
+      border-color: var(--cc, #3a86ff);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.6), 0 0 20px var(--cc-glow, rgba(58,134,255,0.25));
+    }
+    .upg-icon { font-size: 2.5rem; line-height: 1; }
+    .upg-name { font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; text-align: center; }
+    .upg-desc { font-size: 0.78rem; color: #8888bb; text-align: center; line-height: 1.45; }
+
+    @keyframes upg-pick {
+      0%   { transform: translateY(-10px) scale(1);    opacity: 1; }
+      40%  { transform: translateY(-28px) scale(1.28); opacity: 1; }
+      100% { transform: translateY(-42px) scale(1.55); opacity: 0; }
+    }
+    @keyframes upg-dismiss {
+      0%   { opacity: 1; transform: translateY(0px)  scale(1);    }
+      100% { opacity: 0; transform: translateY(8px) scale(0.84); }
+    }
+    .upg-card.picked    { animation: upg-pick    0.58s cubic-bezier(.22,.68,0,1.2) forwards; pointer-events: none; }
+    .upg-card.dismissed { animation: upg-dismiss 0.32s ease-in forwards; pointer-events: none; }
+    .card-hint { color: #444466; font-size: 0.78rem; margin-top: 2px; }
   </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <a href="../../index.html" id="backLink">← Játékok</a>
 
+<!-- ══ START ══ -->
 <div class="overlay" id="startScreen">
   <div class="bigicon">⚓</div>
-  <div class="title">Hajócsata</div>
-  <div class="sub">2 játékos · Osztott képernyő · Kontroller &amp; Billentyűzet</div>
+  <div class="gtitle">Hajócsata</div>
+  <div class="sub">2 játékos co-op · Hullám-alapú szörnyek · Rounds-stílusú fejlesztések</div>
   <div class="ctrlbox">
     <div class="pcol">
-      <div class="plbl" style="color:#3a86ff">1. Játékos (kék)</div>
-      <div class="crow"><span class="key">Bal stick</span> Mozgás (irány + sebesség)</div>
+      <div class="plbl" style="color:#3a86ff">1. Játékos</div>
+      <div class="crow"><span class="key">Bal stick</span> Mozgás (irány+sebesség)</div>
       <div class="crow"><span class="key">Jobb stick</span> Ágyú iránya</div>
-      <div class="crow"><span class="key">RT</span> Tűz &nbsp;<span class="key">A gomb</span> Boost</div>
-      <div class="crow" style="color:#555;margin-top:3px"><span class="key">WASD</span> mozgás &nbsp;<span class="key">Q/E</span> ágyú &nbsp;<span class="key">Szóköz</span> tűz &nbsp;<span class="key">Shift</span> boost</div>
+      <div class="crow"><span class="key">RT</span> Tűz &nbsp; <span class="key">A gomb</span> Boost</div>
+      <div class="crow" style="color:#555"><span class="key">WASD</span>&nbsp;<span class="key">Q/E</span>&nbsp;<span class="key">Szóköz</span>&nbsp;<span class="key">LShift</span></div>
     </div>
     <div class="pcol">
-      <div class="plbl" style="color:#e63946">2. Játékos (piros)</div>
-      <div class="crow"><span class="key">Bal stick</span> Mozgás (irány + sebesség)</div>
+      <div class="plbl" style="color:#e63946">2. Játékos</div>
+      <div class="crow"><span class="key">Bal stick</span> Mozgás (irány+sebesség)</div>
       <div class="crow"><span class="key">Jobb stick</span> Ágyú iránya</div>
-      <div class="crow"><span class="key">RT</span> Tűz &nbsp;<span class="key">A gomb</span> Boost</div>
-      <div class="crow" style="color:#555;margin-top:3px"><span class="key">↑↓←→</span> mozgás &nbsp;<span class="key">Num4/6</span> ágyú &nbsp;<span class="key">Enter</span> tűz</div>
+      <div class="crow"><span class="key">RT</span> Tűz &nbsp; <span class="key">A gomb</span> Boost</div>
+      <div class="crow" style="color:#555"><span class="key">↑↓←→</span>&nbsp;<span class="key">Num4/6</span>&nbsp;<span class="key">Enter</span>&nbsp;<span class="key">RShift</span></div>
     </div>
   </div>
   <button class="btn btn-blue" id="startBtn">⚡ Játék indítása</button>
   <button class="btn btn-ghost" onclick="location.href='../../index.html'">Vissza a főoldalra</button>
 </div>
 
+<!-- ══ CARD PICK ══ -->
+<div class="overlay hidden" id="cardScreen">
+  <div class="card-hdr">
+    <div class="gtitle"><span id="cardPlayerLabel"></span> meghalt!</div>
+    <div class="card-hdr-sub">Válassz egy fejlesztést – csak erre a játékosra érvényes</div>
+  </div>
+  <div class="cards-row" id="cardsRow"></div>
+  <div class="card-hint">Kontroller: ← → navigálás · A gomb: kiválaszt &nbsp;|&nbsp; Egér: kattints</div>
+</div>
+
+<!-- ══ GAME OVER ══ -->
 <div class="overlay hidden" id="goScreen">
-  <div class="bigicon" id="goEmoji">🏆</div>
-  <div class="winlbl" id="goTitle">Nyert!</div>
-  <div class="sub" style="margin-top:10px">Az ellenség hajója elsüllyedt a mélybe.</div>
-  <button class="btn btn-blue" id="replayBtn" style="margin-top:32px">Újra</button>
+  <div class="bigicon">💀</div>
+  <div class="gtitle" style="color:#e63946">Mindkét hajó elsüllyedt</div>
+  <div class="sub" id="goSub"></div>
+  <button class="btn btn-blue" id="replayBtn" style="margin-top:28px">Újra</button>
   <button class="btn btn-ghost" onclick="location.href='../../index.html'">Főoldal</button>
 </div>
 
 <script>
 'use strict';
 
-/*
- * ════════════════════════════════════════════════════════
- *  KÉPCSERE – HOGYAN CSERÉLD LE A TÉGLALAPOKAT KÉPEKRE
- * ════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
+ *  KÉPCSERE ÚTMUTATÓ – HAJÓK ÉS ÁGYÚK
+ * ═══════════════════════════════════════════════════════════════════
+ *  Képkövetelmények:
+ *    Hajó  (ship_p1.png, ship_p2.png) – orra FELFELÉ, középre igazítva
+ *      Ajánlott méret: SHIP_W × SHIP_H px (vagy 2× retina változat)
+ *    Ágyú  (cannon.png) – csöve FELFELÉ, a kép ALJÁNAK KÖZEPE a pivot
+ *      Ajánlott méret: CANNON_W × CANNON_LEN px
  *
- *  1. KÉPFÁJLOK KÖVETELMÉNYEI
- *     Hajó  (ship_blue.png, ship_red.png):
- *       – Átlátszó PNG, az orra (eleje) FELFELÉ mutasson (12 óra)
- *       – Vízszintesen középre igazítva
- *       – Javasolt méret: 56 × 88 px  (SHIP_W × SHIP_H = 28 × 44 → 2× verzió)
- *     Ágyú  (cannon.png):
- *       – Cső felfelé (12 óra), a kép ALJÁNAK KÖZEPE a forgáspont (pivot)
- *       – Javasolt méret: 20 × 72 px  (CANNON_W × CANNON_LEN = 10 × 36 → 2×)
- *
- *  2. FÁJL ELHELYEZÉS
- *       games/battleships/assets/ship_blue.png
- *       games/battleships/assets/ship_red.png
- *       games/battleships/assets/cannon.png
- *
- *  3. BETÖLTÉS – add a konstansok alá:
+ *  1) Add a konstansok ALÁ:
  *       const SHIP_IMGS = [new Image(), new Image()];
- *       SHIP_IMGS[0].src = 'assets/ship_blue.png';
- *       SHIP_IMGS[1].src = 'assets/ship_red.png';
+ *       SHIP_IMGS[0].src = 'assets/ship_p1.png';
+ *       SHIP_IMGS[1].src = 'assets/ship_p2.png';
  *       const CANNON_IMG = new Image();
  *       CANNON_IMG.src = 'assets/cannon.png';
  *
- *  4. CSERÉLD KI A RAJZOLÁST – keresd a "╔══ KÉPCSERE" blokkokat:
+ *  2) Keresd a "╔══ HAJÓ KÉPCSERE" és "╔══ ÁGYÚ KÉPCSERE" blokkokat
+ *     a drawShip() függvényben, és cseréld ki a fillRect sorokat.
+ * ═══════════════════════════════════════════════════════════════════
  *
- *     HAJÓTEST (drawShip-ben, hull szekció):
- *       TÖRÖL: fillStyle, fillRect, strokeRect, globalAlpha / fillRect (bow stripe)
- *       HELYETTE: ctx.drawImage(SHIP_IMGS[idx], -SHIP_W/2, -SHIP_H/2, SHIP_W, SHIP_H);
+ *  ELLENSÉG TESTRESZABÁSA – ENEMY_CONFIGS objektum
+ * ═══════════════════════════════════════════════════════════════════
+ *  Új típus hozzáadása:
+ *    myType: {
+ *      id:    'myType',
+ *      w: 22, h: 22,        ← méret px (drawImage esetén ez a kép mérete)
+ *      speed: 90,           ← mozgási sebesség px/s
+ *      hp: 50,              ← életerő
+ *      dmg: 12,             ← sebe a hajónak ütközésnél
+ *      color: '#AA2222',    ← tartalék szín (ha nincs kép)
+ *      // imgSrc: 'assets/enemy_myType.png',
+ *    }
+ *  Képkövetelmény: orra FELFELÉ (0 radián = fel), középre igazítva.
+ *  Betöltés:
+ *    const ENEMY_IMGS = {};
+ *    ENEMY_IMGS['myType'] = Object.assign(new Image(), {src:'assets/enemy_myType.png'});
+ *  Kép használata drawEnemy()-ben: cseréld ki a "╔══ ELLENSÉG KÉPCSERE" blokkot:
+ *    ctx.drawImage(ENEMY_IMGS[e.cfg.id], -e.cfg.w/2, -e.cfg.h/2, e.cfg.w, e.cfg.h);
  *
- *     ÁGYÚ (drawShip-ben, barrel szekció):
- *       TÖRÖL: fillStyle, fillRect, strokeStyle, strokeRect
- *       HELYETTE: ctx.drawImage(CANNON_IMG, -CANNON_W/2, -CANNON_LEN, CANNON_W, CANNON_LEN);
- *
- *     HIT FLASH képpel – add a drawImage ELÉ:
- *       if (s.hitFlash > 0) {
- *         ctx.globalCompositeOperation = 'source-atop';
- *         ctx.fillStyle = `rgba(255,0,0,${s.hitFlash * 0.5})`;
- *         ctx.fillRect(-SHIP_W/2, -SHIP_H/2, SHIP_W, SHIP_H);
- *         ctx.globalCompositeOperation = 'source-over';
- *       }
- * ════════════════════════════════════════════════════════
- */
+ *  ÚJ HULLÁM HOZZÁADÁSA – WAVE_DEFS tömb
+ *    [['basic',10], ['fast',3], ['tank',1]]  ← [típusNév, darab] párok
+ * ═══════════════════════════════════════════════════════════════════ */
 
-// ─────────────────────────────────────────────
-//  CANVAS
-// ─────────────────────────────────────────────
+// ─── CANVAS ───────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
 function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
 resize();
 addEventListener('resize', resize);
 
-// ─────────────────────────────────────────────
-//  KONSTANSOK
-// ─────────────────────────────────────────────
-const WW         = 5000;   // világ szélessége px
-const WH         = 4000;   // világ magassága px
-const WM         = 90;     // szárazföld határ vastagsága
+// ─── KONSTANSOK ───────────────────────────────────────────────────
+const WW = 5000, WH = 4000, WM = 90;
 
-const SHIP_W     = 28;     // hajótest szélessége  → képnél: ctx.drawImage(img, -SHIP_W/2, ...)
-const SHIP_H     = 44;     // hajótest magassága   → képnél: ctx.drawImage(img, ..., SHIP_W, SHIP_H)
-const SHIP_R     = 18;     // ütközési sugár
+const SHIP_W    = 28;   // hajótest szélessége px  → képnél drawImage szélessége
+const SHIP_H    = 44;   // hajótest magassága  px  → képnél drawImage magassága
+const SHIP_R    = 18;   // ütközési sugár
 
-const CANNON_W   = 10;     // ágyúcső szélessége   → képnél: ctx.drawImage(img, -CANNON_W/2, ...)
-const CANNON_LEN = 36;     // ágyúcső hossza       → képnél: ctx.drawImage(img, ..., CANNON_W, CANNON_LEN)
+const CANNON_W   = 10;  // ágyúcső szélessége  px  → képnél drawImage szélessége
+const CANNON_LEN = 36;  // ágyúcső hossza      px  → képnél drawImage magassága
 
-const MAXSPD     = 230;    // normál sebesség px/s
-const BOOST_SPD  = 400;    // A gombos boost px/s
+const MAXSPD    = 230;
+const BOOST_SPD = 400;
+const BSPD      = 560;
+const BDMG      = 25;
+const FIRECD    = 0.55;
+const MAX_HP    = 100;
+const HIT_CD    = 0.5;
+const STUN_T    = 0.2;
+const BOUNCE_SPD= 220;
+const BLIFE     = 3.5;
+const BR        = 5;
+const HITR      = SHIP_R;
 
-const BSPD       = 560;    // lövedék sebessége px/s
-const BDMG       = 25;     // lövedék sebe HP
-const FIRECD     = 0.55;   // tűz cooldown mp
+const CAM_PAD   = 280;  // min. képernyőmargin a hajók körül (px)
+const MIN_ZOOM  = 0.32;
+const MAX_ZOOM  = 1.9;
+const SPAWN_R   = 650;  // ellenség spawn távolsága a középtől
 
-const MAX_HP     = 100;
-const HITR       = SHIP_R; // találati sugár
-const BR         = 5;      // lövedék rajz sugár
-const BLIFE      = 3.5;    // lövedék élettartam mp
-
-const ISLAND_DMG = 15;     // sziget sebe
-const LAND_DMG   = 10;     // szárazföld sebe
-const HIT_CD     = 0.5;    // sebe cooldown mp
-const STUN_T     = 0.2;    // ütközés utáni stun mp
-const BOUNCE_SPD = 220;    // visszapattanás sebessége px/s
-
-// ─────────────────────────────────────────────
-//  SZIGETEK
-// ─────────────────────────────────────────────
+// ─── SZIGETEK ─────────────────────────────────────────────────────
 const ISLANDS = [
-  // Nagy
-  { x:2500, y:600,  rx:120, ry:92  },
-  { x:2500, y:3400, rx:110, ry:85  },
-  // Közepes
-  { x:900,  y:1600, rx:82,  ry:65  },
-  { x:4100, y:2400, rx:76,  ry:60  },
-  { x:1500, y:3100, rx:70,  ry:55  },
-  { x:3500, y:820,  rx:66,  ry:52  },
-  // Kis
-  { x:1700, y:860,  rx:50,  ry:40  },
-  { x:3300, y:3100, rx:48,  ry:38  },
-  { x:800,  y:3200, rx:42,  ry:33  },
-  { x:4200, y:820,  rx:46,  ry:37  },
-  // Apró
-  { x:3800, y:1500, rx:30,  ry:24  },
-  { x:2100, y:2700, rx:28,  ry:22  },
-  { x:3800, y:3000, rx:25,  ry:20  },
-  { x:1200, y:1200, rx:23,  ry:18  },
+  {x:2500,y:600,  rx:120,ry:92},
+  {x:2500,y:3400, rx:110,ry:85},
+  {x:900, y:1600, rx:82, ry:65},
+  {x:4100,y:2400, rx:76, ry:60},
+  {x:1500,y:3100, rx:70, ry:55},
+  {x:3500,y:820,  rx:66, ry:52},
+  {x:1700,y:860,  rx:50, ry:40},
+  {x:3300,y:3100, rx:48, ry:38},
+  {x:800, y:3200, rx:42, ry:33},
+  {x:4200,y:820,  rx:46, ry:37},
+  {x:3800,y:1500, rx:30, ry:24},
+  {x:2100,y:2700, rx:28, ry:22},
+  {x:3800,y:3000, rx:25, ry:20},
+  {x:1200,y:1200, rx:23, ry:18},
 ];
 
-// ─────────────────────────────────────────────
-//  JÁTÉKOS KONFIG
-// ─────────────────────────────────────────────
+// ─── ELLENSÉG TÍPUSOK ─────────────────────────────────────────────
+// Testreszabáshoz lásd a fejléc ELLENSÉG TESTRESZABÁSA szekcióját!
+const ENEMY_CONFIGS = {
+  basic: { id:'basic', w:22, h:22, speed:72,  hp:40,  dmg:10, color:'#8B3030' },
+  fast:  { id:'fast',  w:16, h:16, speed:145, hp:22,  dmg:7,  color:'#CC6000' },
+  tank:  { id:'tank',  w:34, h:34, speed:42,  hp:110, dmg:20, color:'#404090' },
+};
+
+// ─── HULLÁMDEFINÍCIÓK ─────────────────────────────────────────────
+// [típusNév, darab] párok tömbje per hullám
+const WAVE_DEFS = [
+  [['basic',5]],
+  [['basic',8]],
+  [['basic',8],  ['fast',3]],
+  [['basic',10], ['fast',4]],
+  [['basic',10], ['fast',4],  ['tank',1]],
+  [['basic',12], ['fast',5],  ['tank',2]],
+];
+function getWaveDef(n) {
+  if (n <= WAVE_DEFS.length) return WAVE_DEFS[n-1];
+  return [['basic',8+n*2], ['fast',Math.floor(n*1.5)], ['tank',Math.floor(n*0.6)]];
+}
+
+// ─── FEJLESZTÉS KÁRTYÁK ───────────────────────────────────────────
+// Testreszabáshoz: adj hozzá új elemeket ehhez a tömbhöz!
+// apply(ship) – ez fut le, ha a játékos kiválasztja a kártyát
+const UPGRADES = [
+  { id:'speed',    icon:'💨', name:'Gyorsabb hajó',      desc:'+25% mozgássebesség',          color:'#3a86ff', glow:'rgba(58,134,255,0.28)',  apply: s=>{ s.speedMult   *= 1.25; } },
+  { id:'boost',    icon:'🚀', name:'Erősebb boost',       desc:'+30% boost sebesség',           color:'#ffd166', glow:'rgba(255,209,102,0.28)', apply: s=>{ s.boostMult   *= 1.30; } },
+  { id:'bspd',     icon:'⚡', name:'Gyorsabb lövedék',    desc:'+35% lövedéksebesség',          color:'#90e0ef', glow:'rgba(144,224,239,0.28)', apply: s=>{ s.bSpdMult    *= 1.35; } },
+  { id:'bdmg',     icon:'💥', name:'Erősebb lövedék',     desc:'+50% lövedéksebe',              color:'#e63946', glow:'rgba(230,57,70,0.28)',   apply: s=>{ s.bDmgMult    *= 1.50; } },
+  { id:'maxhp',    icon:'❤️', name:'Több életerő',        desc:'+30 max HP, teljes gyógyulás',  color:'#2dc653', glow:'rgba(45,198,83,0.28)',   apply: s=>{ s.maxHp+=30; s.hp=s.maxHp; } },
+  { id:'firerate', icon:'🔥', name:'Gyorsabb tűzgyakoriság', desc:'-25% tűzés cooldown',      color:'#ff9f1c', glow:'rgba(255,159,28,0.28)',  apply: s=>{ s.fireCdMult  *= 0.75; } },
+  { id:'xshot',    icon:'🔱', name:'Dupla lövés',          desc:'+1 extra lövedék (szétterítve)', color:'#c77dff', glow:'rgba(199,125,255,0.28)', apply: s=>{ s.extraShots  += 1;    } },
+  { id:'regen',    icon:'💚', name:'Regeneráció',          desc:'+3 HP/mp folyamatos gyógyulás', color:'#80b918', glow:'rgba(128,185,24,0.28)', apply: s=>{ s.regenRate   += 3;    } },
+];
+function pick4() {
+  return [...UPGRADES].sort(()=>Math.random()-0.5).slice(0,4);
+}
+
+// ─── JÁTÉKOS KONFIG ───────────────────────────────────────────────
 const PCFG = [
-  { x:WW*0.22, y:WH*0.5, angle: Math.PI/2,  color:'#3a86ff', name:'1. Játékos' },
-  { x:WW*0.78, y:WH*0.5, angle:-Math.PI/2,  color:'#e63946', name:'2. Játékos' },
+  { x:WW*0.33, y:WH*0.5, angle: Math.PI/2,  color:'#3a86ff', name:'1. Játékos' },
+  { x:WW*0.67, y:WH*0.5, angle:-Math.PI/2,  color:'#e63946', name:'2. Játékos' },
 ];
 
-// ─────────────────────────────────────────────
-//  ÁLLAPOT
-// ─────────────────────────────────────────────
-let gt=0, running=false, ships=[], bullets=[];
+// ─── ÁLLAPOT ──────────────────────────────────────────────────────
+let gt=0, state='MENU'; // 'MENU' | 'PLAYING' | 'CARD' | 'GAME_OVER'
+let ships=[], bullets=[], enemies=[];
+let waveNum=0, spawnQueue=[], spawnTimer=0, totalInWave=0;
+let waveBanner=null; // { text, timer }
+let cardPick=null;   // { playerIdx, cards }
+let cardFocused=0, cardNavCd=0;
+const cam = { x:WW/2, y:WH/2, zoom:1 };
+let rafId=null, prevTs=null;
 
+// ─── KONSTRUKTOROK ────────────────────────────────────────────────
 function mkShip(cfg) {
   return {
     x:cfg.x, y:cfg.y, vx:0, vy:0,
     angle:cfg.angle, cannonAngle:cfg.angle,
-    hp:MAX_HP,
+    hp:MAX_HP, maxHp:MAX_HP, alive:true,
     color:cfg.color, name:cfg.name,
-    fireCd:0, hitFlash:0, hitCd:0, stunTime:0,
-    wake:[], spd:0,
+    fireCd:0, hitFlash:0, hitCd:0, stunTime:0, spd:0,
+    // Fejlesztés multiplikátorok
+    speedMult:1, boostMult:1, bSpdMult:1, bDmgMult:1,
+    fireCdMult:1, extraShots:0, regenRate:0,
   };
 }
-function mkBullet(x,y,vx,vy,owner) {
-  return { x,y,vx,vy,owner, life:BLIFE, trail:[] };
+function mkBullet(x,y,vx,vy,owner,dmg) {
+  return { x,y,vx,vy,owner,dmg,life:BLIFE,trail:[] };
+}
+function mkEnemy(typeName, cx, cy) {
+  const cfg = ENEMY_CONFIGS[typeName] ?? ENEMY_CONFIGS.basic;
+  const angle = Math.random()*Math.PI*2;
+  const dist  = SPAWN_R + Math.random()*200;
+  const x = Math.max(WM+cfg.w, Math.min(WW-WM-cfg.w, cx+Math.cos(angle)*dist));
+  const y = Math.max(WM+cfg.h, Math.min(WH-WM-cfg.h, cy+Math.sin(angle)*dist));
+  return { x,y,vx:0,vy:0,angle:0,hp:cfg.hp,maxHp:cfg.hp,cfg,hitFlash:0,stunTime:0,hitCd:0 };
 }
 
-// ─────────────────────────────────────────────
-//  BEMENET
-// ─────────────────────────────────────────────
+// ─── BEMENET ──────────────────────────────────────────────────────
 const keys = new Set();
-addEventListener('keydown', e => {
+addEventListener('keydown', e=>{
   keys.add(e.code);
-  if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))
-    e.preventDefault();
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
 });
-addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('keyup', e=>keys.delete(e.code));
 
-const kbCannon = [PCFG[0].angle, PCFG[1].angle];
-const DZ = 0.13;
-const dz = v => Math.abs(v) < DZ ? 0 : v;
+const kbCannon=[PCFG[0].angle, PCFG[1].angle];
+const DZ=0.13, dz=v=>Math.abs(v)<DZ?0:v;
 
-function readInput(idx, dt) {
-  let lx=0, ly=0, rx=0, ry=0, fire=false, boost=false, hasStick=false;
-
-  const pad = (navigator.getGamepads?.() ?? [])[idx];
+function readInput(idx,dt) {
+  let lx=0,ly=0,rx=0,ry=0,fire=false,boost=false,hasStick=false;
+  const pad=(navigator.getGamepads?.()??[])[idx];
   if (pad?.connected) {
-    lx = dz(pad.axes[0] ?? 0);
-    ly = dz(pad.axes[1] ?? 0);
-    const prx=dz(pad.axes[2]??0), pry=dz(pad.axes[3]??0);
-    if (Math.abs(prx)>0.01 || Math.abs(pry)>0.01) { rx=prx; ry=pry; hasStick=true; }
-    fire  = (pad.buttons[7]?.value ?? 0) > 0.4 || (pad.buttons[5]?.pressed ?? false);
-    boost = pad.buttons[0]?.pressed ?? false;   // A / Cross gomb
+    lx=dz(pad.axes[0]??0); ly=dz(pad.axes[1]??0);
+    const prx=dz(pad.axes[2]??0),pry=dz(pad.axes[3]??0);
+    if(Math.abs(prx)>0.01||Math.abs(pry)>0.01){rx=prx;ry=pry;hasStick=true;}
+    fire  =(pad.buttons[7]?.value??0)>0.4||(pad.buttons[5]?.pressed??false);
+    boost = pad.buttons[0]?.pressed??false;
   }
-
-  if (idx === 0) {
+  if(idx===0){
     const kx=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0);
     const ky=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0);
-    if (kx!==0) lx=kx; if (ky!==0) ly=ky;
-    if (keys.has('Space'))     fire=true;
-    if (keys.has('ShiftLeft')) boost=true;
-    if (keys.has('KeyQ')) kbCannon[0] -= 2.5*dt;
-    if (keys.has('KeyE')) kbCannon[0] += 2.5*dt;
+    if(kx!==0)lx=kx; if(ky!==0)ly=ky;
+    if(keys.has('Space'))fire=true;
+    if(keys.has('ShiftLeft'))boost=true;
+    if(keys.has('KeyQ'))kbCannon[0]-=2.5*dt;
+    if(keys.has('KeyE'))kbCannon[0]+=2.5*dt;
   } else {
     const kx=(keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0);
     const ky=(keys.has('ArrowDown')?1:0)-(keys.has('ArrowUp')?1:0);
-    if (kx!==0) lx=kx; if (ky!==0) ly=ky;
-    if (keys.has('Enter') || keys.has('Numpad0')) fire=true;
-    if (keys.has('ShiftRight')) boost=true;
-    if (keys.has('Numpad4')) kbCannon[1] -= 2.5*dt;
-    if (keys.has('Numpad6')) kbCannon[1] += 2.5*dt;
+    if(kx!==0)lx=kx; if(ky!==0)ly=ky;
+    if(keys.has('Enter')||keys.has('Numpad0'))fire=true;
+    if(keys.has('ShiftRight'))boost=true;
+    if(keys.has('Numpad4'))kbCannon[1]-=2.5*dt;
+    if(keys.has('Numpad6'))kbCannon[1]+=2.5*dt;
   }
-
-  if (!hasStick) { rx=Math.sin(kbCannon[idx]); ry=-Math.cos(kbCannon[idx]); }
-  return { lx, ly, rx, ry, fire, boost };
+  if(!hasStick){rx=Math.sin(kbCannon[idx]);ry=-Math.cos(kbCannon[idx]);}
+  return {lx,ly,rx,ry,fire,boost};
 }
 
-// ─────────────────────────────────────────────
-//  ÜTKÖZÉS SEGÉDFÜGGVÉNYEK
-// ─────────────────────────────────────────────
-function applyIslandCollisions(s) {
-  for (const isl of ISLANDS) {
-    const dx=s.x-isl.x, dy=s.y-isl.y;
-    const ex=isl.rx+SHIP_R, ey=isl.ry+SHIP_R;
-    if ((dx/ex)*(dx/ex)+(dy/ey)*(dy/ey) < 1.0) {
-      // Visszalök a sziget széléhez
-      const len = Math.sqrt(dx*dx+dy*dy) || 1;
-      const t   = 1 / Math.sqrt((dx/ex)*(dx/ex)+(dy/ey)*(dy/ey));
-      s.x = isl.x + dx*t*1.02;
-      s.y = isl.y + dy*t*1.02;
-      // Visszapattanás
-      const nx=dx/len, ny=dy/len;
-      s.vx = nx*BOUNCE_SPD; s.vy = ny*BOUNCE_SPD;
-      s.stunTime = STUN_T;
-      if (s.hitCd <= 0) {
-        s.hp = Math.max(0, s.hp-ISLAND_DMG);
-        s.hitFlash = 1; s.hitCd = HIT_CD;
-      }
+// ─── ÜTKÖZÉS SEGÉDFÜGGVÉNYEK ──────────────────────────────────────
+function applyIsland(s) {
+  for(const isl of ISLANDS){
+    const dx=s.x-isl.x,dy=s.y-isl.y;
+    const ex=isl.rx+SHIP_R,ey=isl.ry+SHIP_R;
+    if((dx/ex)**2+(dy/ey)**2<1){
+      const len=Math.sqrt(dx*dx+dy*dy)||1;
+      const t=1/Math.sqrt((dx/ex)**2+(dy/ey)**2);
+      s.x=isl.x+dx*t*1.02; s.y=isl.y+dy*t*1.02;
+      s.vx=(dx/len)*BOUNCE_SPD; s.vy=(dy/len)*BOUNCE_SPD;
+      s.stunTime=STUN_T;
+      if(s.hitCd<=0){s.hp=Math.max(0,s.hp-10);s.hitFlash=1;s.hitCd=HIT_CD;}
     }
   }
 }
-
-function applyLandCollisions(s) {
-  const minX=WM+SHIP_R, maxX=WW-WM-SHIP_R;
-  const minY=WM+SHIP_R, maxY=WH-WM-SHIP_R;
-  let bx=0, by=0, hit=false;
-  if (s.x<minX) { s.x=minX; bx= 1; hit=true; }
-  else if (s.x>maxX) { s.x=maxX; bx=-1; hit=true; }
-  if (s.y<minY) { s.y=minY; by= 1; hit=true; }
-  else if (s.y>maxY) { s.y=maxY; by=-1; hit=true; }
-  if (hit) {
+function applyLand(s) {
+  const mn=WM+SHIP_R,mxX=WW-WM-SHIP_R,mxY=WH-WM-SHIP_R;
+  let bx=0,by=0,hit=false;
+  if(s.x<mn){s.x=mn;bx=1;hit=true;}else if(s.x>mxX){s.x=mxX;bx=-1;hit=true;}
+  if(s.y<mn){s.y=mn;by=1;hit=true;}else if(s.y>mxY){s.y=mxY;by=-1;hit=true;}
+  if(hit){
     const len=Math.hypot(bx,by)||1;
     s.vx=(bx/len)*BOUNCE_SPD; s.vy=(by/len)*BOUNCE_SPD;
-    s.stunTime=Math.max(s.stunTime, 0.15);
-    if (s.hitCd<=0) { s.hp=Math.max(0,s.hp-LAND_DMG); s.hitFlash=1; s.hitCd=HIT_CD; }
+    s.stunTime=Math.max(s.stunTime,0.15);
+    if(s.hitCd<=0){s.hp=Math.max(0,s.hp-8);s.hitFlash=1;s.hitCd=HIT_CD;}
   }
 }
 
-// ─────────────────────────────────────────────
-//  UPDATE
-// ─────────────────────────────────────────────
-function update(dt) {
-  gt += dt;
+// ─── KAMERA ───────────────────────────────────────────────────────
+function updateCamera(dt) {
+  const alive=ships.filter(s=>s.alive);
+  if(!alive.length)return;
+  const W=canvas.width,H=canvas.height;
+  const cx=alive.reduce((a,s)=>a+s.x,0)/alive.length;
+  const cy=alive.reduce((a,s)=>a+s.y,0)/alive.length;
 
-  for (let i=0; i<2; i++) {
-    const s  = ships[i];
-    const ip = readInput(i, dt);
-
-    // ── Mozgás (direkt joystick → sebesség) ──
-    s.stunTime = Math.max(0, s.stunTime-dt);
-    if (s.stunTime > 0) {
-      // Stun alatt: visszapattanás csillapodik
-      s.vx *= Math.pow(0.04, dt);
-      s.vy *= Math.pow(0.04, dt);
-      if (Math.hypot(s.vx,s.vy) < 2) { s.vx=0; s.vy=0; }
-    } else {
-      const mag = Math.hypot(ip.lx, ip.ly);
-      if (mag > 0.01) {
-        const spd = Math.min(1, mag) * (ip.boost ? BOOST_SPD : MAXSPD);
-        s.vx = (ip.lx/mag) * spd;
-        s.vy = (ip.ly/mag) * spd;
-        s.angle = Math.atan2(ip.lx, -ip.ly);  // hajó a mozgás irányát nézi
-      } else {
-        s.vx = 0; s.vy = 0;
-      }
-    }
-    s.spd = Math.hypot(s.vx, s.vy);
-
-    // ── Pozíció ──
-    s.x += s.vx*dt; s.y += s.vy*dt;
-
-    // ── Ütközések ──
-    s.hitCd = Math.max(0, s.hitCd-dt);
-    applyLandCollisions(s);
-    applyIslandCollisions(s);
-
-    // ── Ágyú irány ──
-    if (Math.abs(ip.rx)>0.01 || Math.abs(ip.ry)>0.01) {
-      s.cannonAngle = Math.atan2(ip.rx, -ip.ry);
-      kbCannon[i]  = s.cannonAngle;
-    }
-
-    // ── Lövés ──
-    s.fireCd -= dt;
-    if (ip.fire && s.fireCd<=0 && s.hp>0) {
-      s.fireCd = FIRECD;
-      const ca=s.cannonAngle;
-      const mx=s.x+Math.sin(ca)*CANNON_LEN;
-      const my=s.y-Math.cos(ca)*CANNON_LEN;
-      bullets.push(mkBullet(mx, my, Math.sin(ca)*BSPD, -Math.cos(ca)*BSPD, i));
-    }
-
-    // ── Nyomvonal ──
-    if (s.spd > 20) {
-      s.wake.unshift({ x:s.x, y:s.y, t:gt });
-      if (s.wake.length > 50) s.wake.pop();
-    }
-
-    s.hitFlash = Math.max(0, s.hitFlash - dt*5);
+  let tz=MAX_ZOOM;
+  if(alive.length>=2){
+    const dx=Math.abs(ships[0].x-ships[1].x)+CAM_PAD*2;
+    const dy=Math.abs(ships[0].y-ships[1].y)+CAM_PAD*2;
+    tz=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,Math.min(W/dx,H/dy)));
   }
 
-  // ── Lövedékek ──
-  for (let i=bullets.length-1; i>=0; i--) {
+  cam.x  +=(cx-cam.x)*Math.min(1,dt*5);
+  cam.y  +=(cy-cam.y)*Math.min(1,dt*5);
+  cam.zoom+=(tz-cam.zoom)*Math.min(1,dt*2.5);
+
+  // Klampold a világ széleihez
+  const hw=W/(2*cam.zoom),hh=H/(2*cam.zoom);
+  cam.x=Math.max(WM+hw,Math.min(WW-WM-hw,cam.x));
+  cam.y=Math.max(WM+hh,Math.min(WH-WM-hh,cam.y));
+}
+
+// ─── ELLENSÉG UPDATE ──────────────────────────────────────────────
+function updateEnemy(e,dt) {
+  e.hitFlash=Math.max(0,e.hitFlash-dt*5);
+  e.hitCd=Math.max(0,e.hitCd-dt);
+  e.stunTime=Math.max(0,e.stunTime-dt);
+
+  const aliveShips=ships.filter(s=>s.alive);
+  if(!aliveShips.length)return;
+  let target=aliveShips[0],minD=Infinity;
+  for(const s of aliveShips){const d=Math.hypot(s.x-e.x,s.y-e.y);if(d<minD){minD=d;target=s;}}
+
+  if(e.stunTime>0){
+    e.vx*=Math.pow(0.05,dt); e.vy*=Math.pow(0.05,dt);
+  } else {
+    const dx=target.x-e.x,dy=target.y-e.y;
+    const len=Math.hypot(dx,dy)||1;
+    e.vx=(dx/len)*e.cfg.speed; e.vy=(dy/len)*e.cfg.speed;
+    e.angle=Math.atan2(dx,-dy);
+  }
+  e.x+=e.vx*dt; e.y+=e.vy*dt;
+  // Világ határ
+  const er=Math.max(e.cfg.w,e.cfg.h)/2;
+  e.x=Math.max(WM+er,Math.min(WW-WM-er,e.x));
+  e.y=Math.max(WM+er,Math.min(WH-WM-er,e.y));
+
+  // Hajó ütközés
+  for(const s of aliveShips){
+    const dx=s.x-e.x,dy=s.y-e.y;
+    const cr=SHIP_R+(e.cfg.w+e.cfg.h)/4;
+    if(dx*dx+dy*dy<cr*cr){
+      const len=Math.hypot(dx,dy)||1;
+      e.vx=-(dx/len)*180; e.vy=-(dy/len)*180;
+      e.stunTime=0.35;
+      e.x=s.x-(dx/len)*cr*1.05; e.y=s.y-(dy/len)*cr*1.05;
+      if(s.hitCd<=0){s.hp=Math.max(0,s.hp-e.cfg.dmg);s.hitFlash=1;s.hitCd=HIT_CD;}
+    }
+  }
+}
+
+// ─── FŐ UPDATE ────────────────────────────────────────────────────
+function update(dt) {
+  gt+=dt;
+
+  // Hullám banner visszaszámlálás
+  if(waveBanner){waveBanner.timer-=dt;if(waveBanner.timer<=0)waveBanner=null;}
+
+  // Ellenség spawn
+  spawnTimer-=dt;
+  if(spawnTimer<=0&&spawnQueue.length>0){
+    const cx=(ships[0].x+ships[1].x)/2, cy=(ships[0].y+ships[1].y)/2;
+    enemies.push(mkEnemy(spawnQueue.shift(),cx,cy));
+    spawnTimer=0.45+Math.random()*0.3;
+  }
+
+  // Hajók
+  for(let i=0;i<2;i++){
+    const s=ships[i]; if(!s.alive)continue;
+    const ip=readInput(i,dt);
+    s.hitCd=Math.max(0,s.hitCd-dt);
+    s.hitFlash=Math.max(0,s.hitFlash-dt*5);
+
+    // Mozgás
+    s.stunTime=Math.max(0,s.stunTime-dt);
+    if(s.stunTime>0){
+      s.vx*=Math.pow(0.04,dt); s.vy*=Math.pow(0.04,dt);
+    } else {
+      const mag=Math.hypot(ip.lx,ip.ly);
+      if(mag>0.01){
+        const spd=Math.min(1,mag)*(ip.boost?BOOST_SPD*s.boostMult:MAXSPD)*s.speedMult;
+        s.vx=(ip.lx/mag)*spd; s.vy=(ip.ly/mag)*spd;
+        s.angle=Math.atan2(ip.lx,-ip.ly);
+      } else { s.vx=0; s.vy=0; }
+    }
+    s.spd=Math.hypot(s.vx,s.vy);
+    s.x+=s.vx*dt; s.y+=s.vy*dt;
+
+    // Ütközések
+    applyLand(s); applyIsland(s);
+
+    // Regeneráció
+    if(s.regenRate>0&&s.hp<s.maxHp) s.hp=Math.min(s.maxHp,s.hp+s.regenRate*dt);
+
+    // Ágyú
+    if(Math.abs(ip.rx)>0.01||Math.abs(ip.ry)>0.01){
+      s.cannonAngle=Math.atan2(ip.rx,-ip.ry); kbCannon[i]=s.cannonAngle;
+    }
+
+    // Lövés
+    s.fireCd-=dt;
+    if(ip.fire&&s.fireCd<=0){
+      s.fireCd=FIRECD*s.fireCdMult;
+      const bS=BSPD*s.bSpdMult, bD=BDMG*s.bDmgMult;
+      const angs=[s.cannonAngle];
+      for(let k=1;k<=s.extraShots;k++){angs.push(s.cannonAngle+k*0.22);angs.push(s.cannonAngle-k*0.22);}
+      for(const ca of angs){
+        bullets.push(mkBullet(s.x+Math.sin(ca)*CANNON_LEN,s.y-Math.cos(ca)*CANNON_LEN,
+          Math.sin(ca)*bS,-Math.cos(ca)*bS,i,bD));
+      }
+    }
+
+    // Nyomvonal
+    if(s.spd>20){s.wake=s.wake||[];s.wake.unshift({x:s.x,y:s.y,t:gt});if(s.wake.length>50)s.wake.pop();}
+
+    // Halál ellenőrzés
+    if(s.hp<=0&&s.alive){
+      s.alive=false;
+      // Ha mindkettő halott: game over
+      if(!ships.some(sh=>sh.alive)){triggerGameOver();return;}
+      // Különben: kártyaválasztás
+      triggerCardPick(i); return;
+    }
+  }
+
+  // Ellenségek update
+  for(const e of enemies) updateEnemy(e,dt);
+
+  // Lövedékek
+  for(let i=bullets.length-1;i>=0;i--){
     const b=bullets[i];
     b.trail.unshift({x:b.x,y:b.y});
-    if (b.trail.length > 10) b.trail.pop();
+    if(b.trail.length>10)b.trail.pop();
     b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
-    // Lövedék elpusztul ha szárazföldre ér
-    let rm = b.life<=0 || b.x<WM || b.x>WW-WM || b.y<WM || b.y>WH-WM;
-    // Ellenőrizzük ha eltalálta a másik hajót
-    for (let j=0; j<2&&!rm; j++) {
-      if (j===b.owner || ships[j].hp<=0) continue;
-      const dx=b.x-ships[j].x, dy=b.y-ships[j].y;
-      if (dx*dx+dy*dy < HITR*HITR) {
-        ships[j].hp = Math.max(0, ships[j].hp-BDMG);
-        ships[j].hitFlash = 1;
-        rm = true;
+    let rm=b.life<=0||b.x<WM||b.x>WW-WM||b.y<WM||b.y>WH-WM;
+    for(let j=enemies.length-1;j>=0&&!rm;j--){
+      const e=enemies[j];
+      const er=(e.cfg.w+e.cfg.h)/4;
+      const dx=b.x-e.x,dy=b.y-e.y;
+      if(dx*dx+dy*dy<er*er){
+        e.hp-=b.dmg; e.hitFlash=1;
+        if(e.hp<=0)enemies.splice(j,1);
+        rm=true;
       }
     }
-    if (rm) bullets.splice(i,1);
+    if(rm)bullets.splice(i,1);
   }
 
-  return ships.some(s => s.hp <= 0);
+  // Hullám befejezve?
+  if(enemies.length===0&&spawnQueue.length===0&&state==='PLAYING'){
+    setTimeout(()=>{ if(state==='PLAYING'||state==='_WAVE_WAIT')startWave(waveNum+1); },1500);
+    state='_WAVE_WAIT'; // prevent double trigger
+  }
 }
 
-// ─────────────────────────────────────────────
-//  RAJZ SEGÉDFÜGGVÉNYEK
-// ─────────────────────────────────────────────
-function rrect(ctx,x,y,w,h,r) {
-  if (w<=0) return;
-  r=Math.min(r, w/2, h/2);
+// ─── RAJZ SEGÉDFÜGGVÉNYEK ─────────────────────────────────────────
+function rrect(ctx,x,y,w,h,r){
+  if(w<=0)return; r=Math.min(r,w/2,h/2);
   ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.lineTo(x+w-r,y);
-  ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r);
-  ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  ctx.lineTo(x+r,y+h);
-  ctx.arcTo(x,y+h,x,y+h-r,r);
-  ctx.lineTo(x,y+r);
-  ctx.arcTo(x,y,x+r,y,r);
-  ctx.closePath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h-r);
+  ctx.arcTo(x+w,y+h,x+w-r,y+h,r); ctx.lineTo(x+r,y+h);
+  ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r);
+  ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+}
+// Világ → képernyő
+function w2s(wx,wy){
+  return [canvas.width/2+(wx-cam.x)*cam.zoom, canvas.height/2+(wy-cam.y)*cam.zoom];
 }
 
-// ─────────────────────────────────────────────
-//  VÍZ háttér (képernyő-tér, kamera-eltolt rácsminták)
-// ─────────────────────────────────────────────
-function drawWater(cx, cy, vw, vh) {
-  ctx.fillStyle = '#0b2240';
-  ctx.fillRect(0,0,vw,vh);
-  const STEP=80, t=gt*0.45;
-  const ox=((vw/2-(cx%STEP)+STEP*1000)%STEP+STEP)%STEP;
-  const oy=((vh/2-(cy%STEP)+STEP*1000)%STEP+STEP)%STEP;
-  ctx.lineWidth=0.9;
-  for (let sx=ox-STEP; sx<=vw+STEP; sx+=STEP) {
-    for (let sy=oy-STEP; sy<=vh+STEP; sy+=STEP) {
-      const wx=sx-vw/2+cx, wy=sy-vh/2+cy;
-      const ph=Math.sin(wx*0.0055+t)+Math.cos(wy*0.0045+t*0.75);
-      const r=18+ph*4, a=Math.min(0.1,Math.max(0,0.038+ph*0.014));
+// ─── VÍZ HÁTTÉR ───────────────────────────────────────────────────
+function drawWater() {
+  const W=canvas.width,H=canvas.height;
+  const hw=W/(2*cam.zoom)+100, hh=H/(2*cam.zoom)+100;
+  const t=gt*0.45,STEP=80;
+  const sx=Math.floor((cam.x-hw)/STEP)*STEP, ex=cam.x+hw;
+  const sy=Math.floor((cam.y-hh)/STEP)*STEP, ey=cam.y+hh;
+  ctx.lineWidth=1;
+  for(let x=sx;x<=ex;x+=STEP){
+    for(let y=sy;y<=ey;y+=STEP){
+      const ph=Math.sin(x*0.0055+t)+Math.cos(y*0.0045+t*0.75);
+      const r=18+ph*4,a=Math.min(0.09,Math.max(0,0.036+ph*0.013));
       ctx.strokeStyle=`rgba(110,190,255,${a})`;
-      ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();
     }
   }
 }
 
-// ─────────────────────────────────────────────
-//  SZÁRAZFÖLD HATÁR (világ-tér)
-// ─────────────────────────────────────────────
+// ─── SZÁRAZFÖLD HATÁR ─────────────────────────────────────────────
 function drawLand() {
-  const M=WM, B=15;
-  // Zöld szárazföld
+  const M=WM,B=15;
   ctx.fillStyle='#3d7228';
-  ctx.fillRect(0,0,WW,M);          // É
-  ctx.fillRect(0,WH-M,WW,M);       // D
-  ctx.fillRect(0,M,M,WH-2*M);      // Ny
-  ctx.fillRect(WW-M,M,M,WH-2*M);   // K
-  // Homok / parti belső szegély
+  ctx.fillRect(0,0,WW,M); ctx.fillRect(0,WH-M,WW,M);
+  ctx.fillRect(0,M,M,WH-2*M); ctx.fillRect(WW-M,M,M,WH-2*M);
   ctx.fillStyle='#c9a870';
-  ctx.fillRect(M,   M-B, WW-2*M, B);       // É parti
-  ctx.fillRect(M,   WH-M, WW-2*M, B);      // D parti
-  ctx.fillRect(M-B, M,   B,  WH-2*M);      // Ny parti
-  ctx.fillRect(WW-M,M,   B,  WH-2*M);      // K parti
+  ctx.fillRect(M,M-B,WW-2*M,B); ctx.fillRect(M,WH-M,WW-2*M,B);
+  ctx.fillRect(M-B,M,B,WH-2*M); ctx.fillRect(WW-M,M,B,WH-2*M);
 }
 
-// ─────────────────────────────────────────────
-//  SZIGET (világ-tér)
-// ─────────────────────────────────────────────
+// ─── SZIGET ───────────────────────────────────────────────────────
 function drawIsland(isl) {
-  // Homokos alap
-  ctx.beginPath(); ctx.ellipse(isl.x,isl.y,isl.rx,isl.ry,0,0,Math.PI*2);
-  ctx.fillStyle='#c9a870'; ctx.fill();
-  // Zöld belseje
-  if (isl.rx > 18) {
-    ctx.beginPath(); ctx.ellipse(isl.x,isl.y,isl.rx*0.72,isl.ry*0.72,0,0,Math.PI*2);
-    ctx.fillStyle='#3d8030'; ctx.fill();
+  ctx.beginPath();ctx.ellipse(isl.x,isl.y,isl.rx,isl.ry,0,0,Math.PI*2);
+  ctx.fillStyle='#c9a870';ctx.fill();
+  if(isl.rx>18){
+    ctx.beginPath();ctx.ellipse(isl.x,isl.y,isl.rx*0.72,isl.ry*0.72,0,0,Math.PI*2);
+    ctx.fillStyle='#3d8030';ctx.fill();
   }
-  // Pálmafa(ák) – méretfüggően
-  const numTrees = isl.rx < 25 ? 0 : isl.rx < 42 ? 1 : isl.rx < 68 ? 2 : 3;
-  if (numTrees === 0) return;
-  const spots=[[0,-0.35],[-0.28,0.1],[0.28,0.12]].slice(0,numTrees);
-  for (const [fx,fy] of spots) {
-    const bx=isl.x+fx*isl.rx, by=isl.y+fy*isl.ry;
-    const sc=Math.max(0.55, Math.min(1.3, isl.rx/70));
-    ctx.strokeStyle='#5a3d1a'; ctx.lineWidth=Math.max(2,sc*2.5); ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+3*sc,by-22*sc); ctx.stroke();
-    const lx=bx+3*sc, ly=by-22*sc;
+  const n=isl.rx<25?0:isl.rx<42?1:isl.rx<68?2:3;
+  const spots=[[0,-0.35],[-0.28,0.1],[0.28,0.12]].slice(0,n);
+  for(const[fx,fy]of spots){
+    const bx=isl.x+fx*isl.rx,by=isl.y+fy*isl.ry;
+    const sc=Math.max(0.55,Math.min(1.3,isl.rx/70));
+    ctx.strokeStyle='#5a3d1a';ctx.lineWidth=Math.max(2,sc*2.5);ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+3*sc,by-22*sc);ctx.stroke();
+    const lx=bx+3*sc,ly=by-22*sc;
     ctx.fillStyle='#3d9044';
-    for (const [dx,dy] of [[-10,-5],[10,-4],[0,-13]]) {
-      ctx.beginPath();
-      ctx.ellipse(lx+dx*sc,ly+dy*sc,10*sc,4.5*sc,Math.atan2(dy,dx),0,Math.PI*2);
-      ctx.fill();
+    for(const[dx,dy]of[[-10,-5],[10,-4],[0,-13]]){
+      ctx.beginPath();ctx.ellipse(lx+dx*sc,ly+dy*sc,10*sc,4.5*sc,Math.atan2(dy,dx),0,Math.PI*2);ctx.fill();
     }
   }
 }
 
-// ─────────────────────────────────────────────
-//  NYOMVONAL (világ-tér)
-// ─────────────────────────────────────────────
+// ─── NYOMVONAL ────────────────────────────────────────────────────
 function drawWake(s) {
-  const sf=Math.min(1, s.spd/MAXSPD);
-  for (let i=0; i<s.wake.length; i++) {
-    const p=s.wake[i], age=gt-p.t;
-    const a=Math.max(0, 0.28-age*0.1)*sf;
-    if (a<=0) continue;
-    ctx.beginPath(); ctx.arc(p.x,p.y,6+i*0.28,0,Math.PI*2);
-    ctx.fillStyle=`rgba(140,210,255,${a})`; ctx.fill();
+  if(!s.wake)return;
+  const sf=Math.min(1,s.spd/MAXSPD);
+  for(let i=0;i<s.wake.length;i++){
+    const p=s.wake[i],age=gt-p.t,a=Math.max(0,0.26-age*0.1)*sf;
+    if(a<=0)continue;
+    ctx.beginPath();ctx.arc(p.x,p.y,6+i*0.28,0,Math.PI*2);
+    ctx.fillStyle=`rgba(140,210,255,${a})`;ctx.fill();
   }
 }
 
-// ─────────────────────────────────────────────
-//  HAJÓ (világ-tér)
-//  idx: 0 = kék, 1 = piros  (kép cseréhez szükséges)
-// ─────────────────────────────────────────────
-function drawShip(s, idx) {
-  const fl = s.hitFlash > 0;
-
-  if (s.hp <= 0) {
-    ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.angle+1.0);
-    ctx.globalAlpha=0.3; ctx.fillStyle='#4a3010';
+// ─── HAJÓ (világ-tér) ─────────────────────────────────────────────
+function drawShip(s,idx) {
+  const fl=s.hitFlash>0;
+  if(!s.alive){
+    ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.angle+1.0);
+    ctx.globalAlpha=0.28;ctx.fillStyle='#4a3010';
     ctx.fillRect(-SHIP_W/2,-SHIP_H/2,SHIP_W,SHIP_H);
-    ctx.globalAlpha=1; ctx.restore(); return;
+    ctx.globalAlpha=1;ctx.restore();return;
   }
 
-  // ── HAJÓTEST ──
-  ctx.save();
-  ctx.translate(s.x, s.y);
-  ctx.rotate(s.angle);
+  // Hajótest
+  ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.angle);
 
-  // ╔══ KÉPCSERE / IMAGE SWAP ═══════════════════════════════╗
-  // Töröld az alábbi 5 sort, és írd helyette:
+  // ╔══ HAJÓ KÉPCSERE ════════════════════════════════════════════╗
+  // Töröld ezt a 4 sort és írd helyette:
   //   ctx.drawImage(SHIP_IMGS[idx], -SHIP_W/2, -SHIP_H/2, SHIP_W, SHIP_H);
-  ctx.fillStyle = fl ? '#cc3333' : '#7a5018';
-  ctx.fillRect(-SHIP_W/2, -SHIP_H/2, SHIP_W, SHIP_H);
-  ctx.strokeStyle = fl ? '#ff7777' : '#4a2e00';
-  ctx.lineWidth=1.5; ctx.strokeRect(-SHIP_W/2,-SHIP_H/2,SHIP_W,SHIP_H);
-  // Orrhajó jelző csík (játékos szín)
-  ctx.fillStyle=s.color; ctx.globalAlpha=0.55;
-  ctx.fillRect(-SHIP_W/2,-SHIP_H/2,SHIP_W,8);
+  ctx.fillStyle=fl?'#cc3333':'#7a5018';
+  ctx.fillRect(-SHIP_W/2,-SHIP_H/2,SHIP_W,SHIP_H);
+  ctx.strokeStyle=fl?'#ff8888':'#4a2e00';ctx.lineWidth=1.5;
+  ctx.strokeRect(-SHIP_W/2,-SHIP_H/2,SHIP_W,SHIP_H);
+  ctx.fillStyle=s.color;ctx.globalAlpha=0.55;
+  ctx.fillRect(-SHIP_W/2,-SHIP_H/2,SHIP_W,8); // orr jelző csík
   ctx.globalAlpha=1;
-  // ╚════════════════════════════════════════════════════════╝
-
+  // ╚════════════════════════════════════════════════════════════╝
   ctx.restore();
 
-  // ── ÁGYÚ ALAP ──
-  ctx.save();
-  ctx.translate(s.x, s.y);
-  ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2);
-  ctx.fillStyle='#2a2a2a'; ctx.fill();
-  ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.stroke();
-
-  // ── ÁGYÚCSŐ (abszolút szög, nem a hajóhoz viszonyítva) ──
+  // Ágyú alap + cső
+  ctx.save();ctx.translate(s.x,s.y);
+  ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);
+  ctx.fillStyle='#2a2a2a';ctx.fill();
+  ctx.strokeStyle='#555';ctx.lineWidth=1;ctx.stroke();
   ctx.rotate(s.cannonAngle);
 
-  // ╔══ KÉPCSERE / IMAGE SWAP ═══════════════════════════════╗
-  // Töröld az alábbi 4 sort, és írd helyette:
+  // ╔══ ÁGYÚ KÉPCSERE ════════════════════════════════════════════╗
+  // Töröld ezt a 4 sort és írd helyette:
   //   ctx.drawImage(CANNON_IMG, -CANNON_W/2, -CANNON_LEN, CANNON_W, CANNON_LEN);
   ctx.fillStyle='#4a3010';
-  ctx.fillRect(-CANNON_W/2, -CANNON_LEN, CANNON_W, CANNON_LEN-5);
-  ctx.strokeStyle='#2a1a00'; ctx.lineWidth=1;
+  ctx.fillRect(-CANNON_W/2,-CANNON_LEN,CANNON_W,CANNON_LEN-5);
+  ctx.strokeStyle='#2a1a00';ctx.lineWidth=1;
   ctx.strokeRect(-CANNON_W/2,-CANNON_LEN,CANNON_W,CANNON_LEN-5);
-  // ╚════════════════════════════════════════════════════════╝
-
+  // ╚════════════════════════════════════════════════════════════╝
   ctx.restore();
 }
 
-// ─────────────────────────────────────────────
-//  HP SÁV (világ-tér)
-// ─────────────────────────────────────────────
-function drawHpBar(s) {
-  const BW=62, BH=9;
-  const bx=s.x-BW/2, by=s.y-SHIP_H/2-28; // hajótest felett
-  ctx.fillStyle='rgba(0,0,0,0.72)';
-  rrect(ctx,bx-2,by-2,BW+4,BH+4,5); ctx.fill();
-  ctx.fillStyle='#1a1a2e';
-  rrect(ctx,bx,by,BW,BH,4); ctx.fill();
-  const ratio=Math.max(0,s.hp/MAX_HP);
-  if (ratio>0) {
-    ctx.fillStyle=ratio>0.55?'#2dc653':ratio>0.3?'#ffd166':'#e63946';
-    rrect(ctx,bx,by,BW*ratio,BH,4); ctx.fill();
+// ─── ELLENSÉG (világ-tér) ─────────────────────────────────────────
+function drawEnemy(e) {
+  const fl=e.hitFlash>0;
+  ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.angle);
+
+  // ╔══ ELLENSÉG KÉPCSERE ════════════════════════════════════════╗
+  // Töröld ezt a 4 sort és írd helyette:
+  //   ctx.drawImage(ENEMY_IMGS[e.cfg.id], -e.cfg.w/2, -e.cfg.h/2, e.cfg.w, e.cfg.h);
+  ctx.fillStyle=fl?'#ff6666':e.cfg.color;
+  ctx.fillRect(-e.cfg.w/2,-e.cfg.h/2,e.cfg.w,e.cfg.h);
+  ctx.strokeStyle=fl?'#ffaaaa':'#220000';ctx.lineWidth=1.5;
+  ctx.strokeRect(-e.cfg.w/2,-e.cfg.h/2,e.cfg.w,e.cfg.h);
+  // ╚════════════════════════════════════════════════════════════╝
+  ctx.restore();
+
+  // HP sáv (csak ha nem teljes HP)
+  if(e.hp<e.maxHp){
+    const S=1/cam.zoom, BW=e.cfg.w*1.6, BH=5*S;
+    const bx=e.x-BW/2, by=e.y-e.cfg.h/2-10*S;
+    ctx.fillStyle='rgba(0,0,0,0.6)'; rrect(ctx,bx-1,by-1,BW+2,BH+2,3); ctx.fill();
+    ctx.fillStyle='#cc2222'; rrect(ctx,bx,by,BW,BH,2); ctx.fill();
+    const r=Math.max(0,e.hp/e.maxHp);
+    ctx.fillStyle='#e63946'; rrect(ctx,bx,by,BW*r,BH,2); ctx.fill();
   }
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  ctx.font='bold 10px system-ui';
-  ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`${Math.max(0,s.hp)}`, s.x, by+BH+3);
 }
 
-// ─────────────────────────────────────────────
-//  LÖVEDÉKEK (világ-tér)
-// ─────────────────────────────────────────────
+// ─── LÖVEDÉKEK ────────────────────────────────────────────────────
 function drawBullets() {
-  for (const b of bullets) {
-    for (let i=b.trail.length-1; i>=0; i--) {
-      const pt=b.trail[i], a=(1-(i+1)/(b.trail.length+1))*0.5;
-      const r=BR*(1-i/b.trail.length)*0.7;
-      ctx.beginPath(); ctx.arc(pt.x,pt.y,r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,210,60,${a})`; ctx.fill();
+  for(const b of bullets){
+    for(let i=b.trail.length-1;i>=0;i--){
+      const pt=b.trail[i],a=(1-(i+1)/(b.trail.length+1))*0.5,r=BR*(1-i/b.trail.length)*0.7;
+      ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,210,60,${a})`;ctx.fill();
     }
-    ctx.save(); ctx.shadowColor='#ffdd50'; ctx.shadowBlur=14;
-    ctx.beginPath(); ctx.arc(b.x,b.y,BR,0,Math.PI*2);
-    ctx.fillStyle='#ffe060'; ctx.fill();
-    ctx.restore();
+    ctx.save();ctx.shadowColor='#ffdd50';ctx.shadowBlur=14;
+    ctx.beginPath();ctx.arc(b.x,b.y,BR,0,Math.PI*2);
+    ctx.fillStyle='#ffe060';ctx.fill();ctx.restore();
   }
 }
 
-// ─────────────────────────────────────────────
-//  MINIATÉRKÉPŰ (vászon-tér, elválasztó felett)
-// ─────────────────────────────────────────────
-function drawMinimap(cx,cy) {
-  const mmW=110, mmH=Math.round(110*WH/WW);
-  const sx=cx-mmW/2, sy=cy;
-  const scX=mmW/WW, scY=mmH/WH;
-  ctx.fillStyle='rgba(0,0,0,0.72)';
-  rrect(ctx,sx,sy,mmW,mmH,4); ctx.fill();
-  ctx.strokeStyle='#333355'; ctx.lineWidth=1;
-  rrect(ctx,sx,sy,mmW,mmH,4); ctx.stroke();
-  // Szárazföld
-  ctx.fillStyle='#3d7228';
-  ctx.fillRect(sx,sy,mmW,WM*scY);
-  ctx.fillRect(sx,sy+mmH-WM*scY,mmW,WM*scY);
-  ctx.fillRect(sx,sy+WM*scY,WM*scX,mmH-2*WM*scY);
-  ctx.fillRect(sx+mmW-WM*scX,sy+WM*scY,WM*scX,mmH-2*WM*scY);
-  // Szigetek
-  ctx.fillStyle='#8a7040';
-  for (const isl of ISLANDS) {
-    ctx.beginPath();
-    ctx.arc(sx+isl.x*scX, sy+isl.y*scY, Math.max(2,isl.rx*scX*1.4), 0, Math.PI*2);
-    ctx.fill();
+// ─── KÉPERNYŐ-TÉR HUD ─────────────────────────────────────────────
+function drawShipHud(s,idx) {
+  const [sx,sy]=w2s(s.x,s.y);
+  const BW=110,BH=12,pad=10;
+  const bx=idx===0?pad:canvas.width-BW-pad, by=pad;
+
+  // Játékos név
+  ctx.fillStyle=s.color; ctx.font='bold 12px Inter,system-ui';
+  ctx.textAlign=idx===0?'left':'right'; ctx.textBaseline='top';
+  ctx.fillText(s.name, idx===0?bx:bx+BW, by);
+
+  // HP sáv
+  const hy=by+18;
+  ctx.fillStyle='rgba(0,0,0,0.55)'; rrect(ctx,bx-1,hy-1,BW+2,BH+2,4); ctx.fill();
+  ctx.fillStyle='#1a1a2e'; rrect(ctx,bx,hy,BW,BH,3); ctx.fill();
+  const r=Math.max(0,s.hp/s.maxHp);
+  if(r>0){
+    ctx.fillStyle=r>0.55?'#2dc653':r>0.3?'#ffd166':'#e63946';
+    rrect(ctx,bx,hy,BW*r,BH,3); ctx.fill();
   }
-  // Hajók
-  for (const s of ships) {
-    ctx.beginPath(); ctx.arc(sx+s.x*scX, sy+s.y*scY, 3.5, 0, Math.PI*2);
-    ctx.fillStyle=s.color; ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.font='10px system-ui';
+  ctx.textAlign=idx===0?'left':'right'; ctx.textBaseline='top';
+  ctx.fillText(`${Math.ceil(Math.max(0,s.hp))}/${s.maxHp}`,idx===0?bx:bx+BW,hy+BH+3);
+
+  // Fejlesztés ikonok
+  const icons=[];
+  if(s.speedMult>1)    icons.push('💨');
+  if(s.bDmgMult>1)     icons.push('💥');
+  if(s.bSpdMult>1)     icons.push('⚡');
+  if(s.fireCdMult<1)   icons.push('🔥');
+  if(s.extraShots>0)   icons.push('🔱');
+  if(s.regenRate>0)    icons.push('💚');
+  if(s.boostMult>1)    icons.push('🚀');
+  if(s.maxHp>MAX_HP)   icons.push('❤️');
+  if(icons.length){
+    ctx.font='12px system-ui'; ctx.textBaseline='top';
+    ctx.textAlign=idx===0?'left':'right';
+    ctx.fillText(icons.slice(0,6).join(' '), idx===0?bx:bx+BW, hy+BH+16);
   }
+
+  // Lézerzöld jelölő nyíl a hajóra
+  ctx.strokeStyle=s.color+'88'; ctx.lineWidth=1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(sx,sy-SHIP_H/2*cam.zoom-4); ctx.lineTo(sx,sy-SHIP_H/2*cam.zoom-18);
+  ctx.stroke(); ctx.setLineDash([]);
 }
 
-// ─────────────────────────────────────────────
-//  VIEWPORT RAJZOLÁS
-// ─────────────────────────────────────────────
-function renderVP(idx, clipX, vw, vh) {
-  const s=ships[idx];
-  // Kamera – klampolva a világ széleihez
-  const camX=Math.max(vw/2, Math.min(WW-vw/2, s.x));
-  const camY=Math.max(vh/2, Math.min(WH-vh/2, s.y));
+function drawWaveHud() {
+  const W=canvas.width;
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.font='bold 15px Fredoka,system-ui';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(`${waveNum}. hullám`, W/2, 12);
 
-  ctx.save();
-  ctx.beginPath(); ctx.rect(clipX,0,vw,vh); ctx.clip();
-
-  // Víz (képernyő-tér)
-  ctx.save(); ctx.translate(clipX,0); drawWater(camX,camY,vw,vh); ctx.restore();
-
-  // Világ-tér: (camX,camY) → képernyő közepére (clipX+vw/2, vh/2)
-  ctx.save();
-  ctx.translate(clipX+vw/2-camX, vh/2-camY);
-
-  drawLand();
-  for (const isl of ISLANDS) drawIsland(isl);
-  for (const sh of ships)    drawWake(sh);
-  drawBullets();
-  for (let i=0;i<2;i++) { drawShip(ships[i],i); drawHpBar(ships[i]); }
-
-  ctx.restore();
-
-  // HUD overlay
-  ctx.save(); ctx.translate(clipX,0);
-  ctx.fillStyle=ships[idx].color;
-  ctx.font='bold 13px Inter,system-ui';
-  ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillText(ships[idx].name, 10, 10);
-  ctx.restore();
-
-  ctx.restore();
+  const left=enemies.length+spawnQueue.length;
+  ctx.font='12px system-ui';
+  ctx.fillStyle=`rgba(255,255,255,0.4)`;
+  ctx.fillText(`${left} ellenség`, W/2, 34);
 }
 
-// ─────────────────────────────────────────────
-//  TELJES KÉPKOCKA RAJZOLÁS
-// ─────────────────────────────────────────────
-function render() {
-  const W=canvas.width, H=canvas.height, half=Math.floor(W/2);
-  ctx.clearRect(0,0,W,H);
-  renderVP(0, 0,       half-2, H);
-  renderVP(1, half+2,  half-2, H);
-  // Elválasztó
-  ctx.fillStyle='#08080f'; ctx.fillRect(half-2,0,4,H);
-  // Miniatérkép
-  drawMinimap(half, 10);
-  // Horgony ikon
-  ctx.fillStyle='rgba(255,209,102,0.65)';
-  ctx.font='14px sans-serif';
+function drawWaveBanner() {
+  if(!waveBanner||waveBanner.timer<=0)return;
+  const W=canvas.width,H=canvas.height;
+  const t=waveBanner.timer, max=waveBanner.maxTimer;
+  const alpha=Math.min(1,t*3)*Math.min(1,(t/max)*5);
+  ctx.globalAlpha=Math.max(0,alpha);
+  ctx.font='bold 52px Fredoka,system-ui';
+  ctx.fillStyle='#ffd166';
   ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('⚓', half, H-20);
+  ctx.fillText(waveBanner.text, W/2, H/2-55);
+  ctx.font='18px Inter,system-ui';
+  ctx.fillStyle='rgba(255,255,255,0.65)';
+  ctx.fillText('Készülj!', W/2, H/2-5);
+  ctx.globalAlpha=1;
 }
 
-// ─────────────────────────────────────────────
-//  JÁTÉK HUROK
-// ─────────────────────────────────────────────
-let rafId=null, prevTs=null;
-function loop(ts) {
-  if (!running) return;
-  if (prevTs===null) prevTs=ts;
-  const dt=Math.min((ts-prevTs)/1000, 0.05);
-  prevTs=ts;
-  if (update(dt)) { running=false; showGameOver(); }
-  else { render(); rafId=requestAnimationFrame(loop); }
+// ─── RENDER ───────────────────────────────────────────────────────
+function render() {
+  const W=canvas.width,H=canvas.height;
+  // Víz alap
+  ctx.fillStyle='#0b2240'; ctx.fillRect(0,0,W,H);
+
+  // Kamera transform
+  ctx.save();
+  ctx.translate(W/2,H/2);
+  ctx.scale(cam.zoom,cam.zoom);
+  ctx.translate(-cam.x,-cam.y);
+
+  drawWater();
+  drawLand();
+  for(const isl of ISLANDS) drawIsland(isl);
+  for(const s of ships) drawWake(s);
+  for(const e of enemies) drawEnemy(e);
+  drawBullets();
+  for(let i=0;i<2;i++) drawShip(ships[i],i);
+
+  ctx.restore(); // vissza képernyő-térbe
+
+  // HUD
+  for(let i=0;i<2;i++) drawShipHud(ships[i],i);
+  drawWaveHud();
+  drawWaveBanner();
 }
 
-// ─────────────────────────────────────────────
-//  JÁTÉK KEZELÉS
-// ─────────────────────────────────────────────
-function initGame() {
-  ships=PCFG.map(c=>mkShip(c)); bullets=[]; gt=0; prevTs=null;
-  kbCannon[0]=PCFG[0].angle; kbCannon[1]=PCFG[1].angle;
+// ─── KÁRTYA PICK ──────────────────────────────────────────────────
+function triggerCardPick(playerIdx) {
+  state='CARD';
+  cardPick={playerIdx,cards:pick4()};
+  cardFocused=0; cardNavCd=0;
+  const s=ships[playerIdx];
+  const lbl=document.getElementById('cardPlayerLabel');
+  lbl.textContent=s.name; lbl.style.color=s.color;
+  const row=document.getElementById('cardsRow');
+  row.innerHTML='';
+  cardPick.cards.forEach((card,i)=>{
+    const el=document.createElement('button');
+    el.className='upg-card'+(i===0?' focused':'');
+    el.style.setProperty('--cc',card.color);
+    el.style.setProperty('--cc-glow',card.glow);
+    el.innerHTML=`<div class="upg-icon">${card.icon}</div>
+      <div class="upg-name">${card.name}</div>
+      <div class="upg-desc">${card.desc}</div>`;
+    el.addEventListener('click',()=>selectCard(i));
+    row.appendChild(el);
+  });
+  document.getElementById('cardScreen').classList.remove('hidden');
 }
-function startGame() {
-  if (rafId) cancelAnimationFrame(rafId);
-  initGame(); running=true;
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('goScreen').classList.add('hidden');
-  rafId=requestAnimationFrame(loop);
+
+function updateCardFocus() {
+  document.querySelectorAll('.upg-card').forEach((c,i)=>c.classList.toggle('focused',i===cardFocused));
 }
-function showGameOver() {
-  const winner=ships.find(s=>s.hp>0);
-  const cmap={'1. Játékos':'#3a86ff','2. Játékos':'#e63946'};
-  if (winner) {
-    document.getElementById('goTitle').textContent=`${winner.name} nyert!`;
-    document.getElementById('goTitle').style.color=cmap[winner.name]??'#ffd166';
-    document.getElementById('goEmoji').textContent='🏆';
-  } else {
-    document.getElementById('goTitle').textContent='Döntetlen!';
-    document.getElementById('goTitle').style.color='#ffd166';
-    document.getElementById('goEmoji').textContent='🤝';
+
+function selectCard(idx) {
+  document.querySelectorAll('.upg-card').forEach((c,i)=>{
+    if(i===idx) c.classList.add('picked'); else c.classList.add('dismissed');
+  });
+  setTimeout(()=>{
+    const card=cardPick.cards[idx];
+    card.apply(ships[cardPick.playerIdx]);
+    respawnShip(cardPick.playerIdx);
+    document.getElementById('cardScreen').classList.add('hidden');
+    cardPick=null;
+    state='PLAYING';
+  },620);
+}
+
+function respawnShip(idx) {
+  const other=ships[1-idx];
+  const s=ships[idx];
+  s.hp=s.maxHp; s.alive=true;
+  s.hitCd=1.5; s.stunTime=0; s.hitFlash=0; s.vx=0; s.vy=0;
+  const a=Math.random()*Math.PI*2;
+  s.x=Math.max(WM+SHIP_R,Math.min(WW-WM-SHIP_R, other.x+Math.cos(a)*160));
+  s.y=Math.max(WM+SHIP_R,Math.min(WH-WM-SHIP_R, other.y+Math.sin(a)*160));
+}
+
+// Kontroller navigáció a kártya képernyőn
+function pollCardInput(dt) {
+  cardNavCd=Math.max(0,cardNavCd-dt);
+  const idx=cardPick?.playerIdx??0;
+  const pad=(navigator.getGamepads?.()??[])[idx];
+  const lx=pad?.axes[0]??0;
+  const dl=pad?.buttons[14]?.pressed??false;
+  const dr=pad?.buttons[15]?.pressed??false;
+  const aBtn=pad?.buttons[0]?.pressed??false;
+  // Keyboard (mindkét játékos)
+  const kl=keys.has('ArrowLeft')||keys.has('KeyA')||keys.has('Numpad4');
+  const kr=keys.has('ArrowRight')||keys.has('KeyD')||keys.has('Numpad6');
+  const kc=keys.has('Enter')||keys.has('Space')||keys.has('Numpad0');
+
+  if((lx<-0.4||dl||kl)&&cardNavCd<=0){
+    cardFocused=(cardFocused+3)%4; cardNavCd=0.2; updateCardFocus();
+  } else if((lx>0.4||dr||kr)&&cardNavCd<=0){
+    cardFocused=(cardFocused+1)%4; cardNavCd=0.2; updateCardFocus();
   }
+  if((aBtn||kc)&&cardNavCd<=0){
+    selectCard(cardFocused); cardNavCd=2;
+  }
+}
+
+// ─── HULLÁM KEZELÉS ───────────────────────────────────────────────
+function startWave(n) {
+  waveNum=n; state='PLAYING';
+  enemies=[]; bullets=[];
+  const def=getWaveDef(n);
+  spawnQueue=[];
+  for(const[type,count]of def) for(let i=0;i<count;i++) spawnQueue.push(type);
+  spawnQueue.sort(()=>Math.random()-0.5);
+  totalInWave=spawnQueue.length;
+  spawnTimer=1.2;
+  const maxTimer=2.2;
+  waveBanner={text:`${n}. Hullám`,timer:maxTimer,maxTimer};
+}
+
+// ─── GAME OVER ────────────────────────────────────────────────────
+function triggerGameOver() {
+  state='GAME_OVER';
+  document.getElementById('goSub').textContent=`${waveNum}. hullámig jutottatok el.`;
   document.getElementById('goScreen').classList.remove('hidden');
 }
 
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('replayBtn').addEventListener('click', startGame);
+// ─── GAME LOOP ────────────────────────────────────────────────────
+function loop(ts) {
+  if(rafId===null)return; // stopped
+  if(prevTs===null)prevTs=ts;
+  const dt=Math.min((ts-prevTs)/1000,0.05);
+  prevTs=ts;
+
+  if(state==='PLAYING'||state==='_WAVE_WAIT') {
+    update(dt);
+    updateCamera(dt);
+  } else if(state==='CARD') {
+    pollCardInput(dt);
+    updateCamera(dt);
+  }
+
+  render();
+  rafId=requestAnimationFrame(loop);
+}
+
+// ─── INICIALIZÁLÁS ────────────────────────────────────────────────
+function initGame() {
+  ships=PCFG.map(c=>mkShip(c));
+  ships.forEach(s=>s.wake=[]);
+  bullets=[]; enemies=[];
+  gt=0; prevTs=null; waveNum=0;
+  spawnQueue=[]; cam.x=WW/2; cam.y=WH/2; cam.zoom=1.0;
+  kbCannon[0]=PCFG[0].angle; kbCannon[1]=PCFG[1].angle;
+}
+
+function startGame() {
+  if(rafId)cancelAnimationFrame(rafId);
+  initGame();
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('goScreen').classList.add('hidden');
+  document.getElementById('cardScreen').classList.add('hidden');
+  startWave(1);
+  rafId=requestAnimationFrame(loop);
+}
+
+document.getElementById('startBtn').addEventListener('click',startGame);
+document.getElementById('replayBtn').addEventListener('click',startGame);
 </script>
 </body>
 </html>
