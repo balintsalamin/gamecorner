@@ -19,9 +19,10 @@
     .bigicon { font-size: 3.5rem; line-height: 1; margin-bottom: 14px; }
     .gtitle { font-family: 'Fredoka', sans-serif; font-size: clamp(2.4rem,5vw,3.6rem); font-weight: 700; color: #ffd166; }
     .sub { color: #7777aa; margin-top: 8px; font-size: 0.9rem; text-align: center; }
+    .hint { color: #555588; font-size: 0.78rem; text-align: center; margin-top: 4px; }
     .ctrlbox {
       display: grid; grid-template-columns: 1fr 1fr; gap: 14px 48px;
-      margin: 24px 0; padding: 18px 26px; background: #12142a; border-radius: 14px; border: 1px solid #1e2040;
+      margin: 24px 0 10px; padding: 18px 26px; background: #12142a; border-radius: 14px; border: 1px solid #1e2040;
     }
     .pcol { display: flex; flex-direction: column; gap: 8px; }
     .plbl { font-weight: 600; font-size: 0.88rem; margin-bottom: 2px; }
@@ -29,7 +30,7 @@
     .key { display: inline-block; background: #22243a; border: 1px solid #3a3d5a; border-radius: 5px; padding: 3px 9px; font-size: 0.75rem; color: #9a9abb; white-space: nowrap; }
     .btn { padding: 12px 42px; border: none; border-radius: 999px; font-size: 1.05rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: transform 0.1s; }
     .btn:active { transform: scale(0.96); }
-    .btn-blue  { background: linear-gradient(135deg,#3a86ff,#1a5ccc); color: #fff; }
+    .btn-blue  { background: linear-gradient(135deg,#3a86ff,#1a5ccc); color: #fff; margin-top: 18px; }
     .btn-ghost { background: transparent; color: #5555aa; border: 1px solid #2a2c45; margin-top: 10px; }
     .btn-ghost:hover { color: #8888cc; }
     #backLink { position: fixed; top: 14px; left: 14px; z-index: 30; color: #555; text-decoration: none; font-size: 0.85rem; padding: 5px 12px; border: 1px solid #222; border-radius: 8px; background: rgba(0,0,0,0.5); }
@@ -38,6 +39,7 @@
     /* ── CARD PICK ── */
     #cardScreen { background: rgba(6,8,22,0.97); flex-direction: column; }
     .card-hdr { text-align: center; }
+    .card-hdr-round { color: #ffd166; font-weight: 600; font-size: 0.82rem; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
     .card-hdr .gtitle { font-size: 1.9rem; color: #fff; }
     .card-hdr-sub { color: #6666aa; font-size: 0.85rem; margin-top: 6px; }
     .cards-row { display: flex; gap: 18px; margin: 26px 0 18px; flex-wrap: wrap; justify-content: center; }
@@ -80,7 +82,7 @@
 <div class="overlay" id="startScreen">
   <div class="bigicon">⚓</div>
   <div class="gtitle">Hajócsata</div>
-  <div class="sub">2 játékos co-op · Hullám-alapú szörnyek · Rounds-stílusú fejlesztések</div>
+  <div class="sub">2 játékos co-op · Folyamatosan érkező szörnyek, növekvő nehézség</div>
   <div class="ctrlbox">
     <div class="pcol">
       <div class="plbl" style="color:#3a86ff">1. Játékos</div>
@@ -97,6 +99,7 @@
       <div class="crow" style="color:#555"><span class="key">↑↓←→</span>&nbsp;<span class="key">Num4/6</span>&nbsp;<span class="key">Enter</span>&nbsp;<span class="key">RShift</span></div>
     </div>
   </div>
+  <div class="hint">🎮 Az elsőként csatlakoztatott kontroller irányítja az 1., a másodikként csatlakoztatott a 2. Játékost.</div>
   <button class="btn btn-blue" id="startBtn">⚡ Játék indítása</button>
   <button class="btn btn-ghost" onclick="location.href='../../index.html'">Vissza a főoldalra</button>
 </div>
@@ -104,7 +107,8 @@
 <!-- ══ CARD PICK ══ -->
 <div class="overlay hidden" id="cardScreen">
   <div class="card-hdr">
-    <div class="gtitle"><span id="cardPlayerLabel"></span> meghalt!</div>
+    <div class="card-hdr-round" id="cardRoundLabel"></div>
+    <div class="gtitle"><span id="cardPlayerLabel"></span> elsüllyedt!</div>
     <div class="card-hdr-sub">Válassz egy fejlesztést – csak erre a játékosra érvényes</div>
   </div>
   <div class="cards-row" id="cardsRow"></div>
@@ -151,7 +155,8 @@
  *      w: 22, h: 22,        ← méret px (drawImage esetén ez a kép mérete)
  *      speed: 90,           ← mozgási sebesség px/s
  *      hp: 50,              ← életerő
- *      dmg: 12,             ← sebe a hajónak ütközésnél
+ *      dmg: 12,             ← sebe a hajónak ütközésnél (a nehézségi
+ *                              szorzó ÉRINTI – lásd lentebb)
  *      color: '#AA2222',    ← tartalék szín (ha nincs kép)
  *      // imgSrc: 'assets/enemy_myType.png',
  *    }
@@ -162,8 +167,20 @@
  *  Kép használata drawEnemy()-ben: cseréld ki a "╔══ ELLENSÉG KÉPCSERE" blokkot:
  *    ctx.drawImage(ENEMY_IMGS[e.cfg.id], -e.cfg.w/2, -e.cfg.h/2, e.cfg.w, e.cfg.h);
  *
- *  ÚJ HULLÁM HOZZÁADÁSA – WAVE_DEFS tömb
- *    [['basic',10], ['fast',3], ['tank',1]]  ← [típusNév, darab] párok
+ *  Új típus felvétele a spawn-poolba: ENEMY_UNLOCK_BY_TIER tömb,
+ *  lásd a "NEHÉZSÉGI BEÁLLÍTÁSOK" szekciót.
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ *  NEHÉZSÉG TESTRESZABÁSA
+ * ═══════════════════════════════════════════════════════════════════
+ *  Lásd a "NEHÉZSÉGI BEÁLLÍTÁSOK" konstansblokkot a kód elején. Itt
+ *  állítható: mennyi időnként (mp) nő egy szintet a nehézség, mennyivel
+ *  nő az egyidejű ellenségszám / spawn gyakoriság / ellenség sebzés,
+ *  és hogy melyik ellenségtípus mikor "oldódik fel".
+ *
+ *  FONTOS: a "X. Kör" számláló (ami akkor nő, amikor egy hajó elsüllyed)
+ *  CSAK egy vizuális jelző – nem befolyásolja a nehézséget. A nehézség
+ *  kizárólag az eltelt játékidőtől (gt) függ.
  * ═══════════════════════════════════════════════════════════════════ */
 
 // ─── CANVAS ───────────────────────────────────────────────────────
@@ -201,6 +218,38 @@ const MIN_ZOOM  = 0.32;
 const MAX_ZOOM  = 1.9;
 const SPAWN_R   = 650;  // ellenség spawn távolsága a középtől
 
+// ─── NEHÉZSÉGI BEÁLLÍTÁSOK ────────────────────────────────────────
+// Testreszabáshoz: csak ezeket az értékeket kell módosítani!
+// A nehézség FOLYAMATOSAN nő a játékidővel. A "Kör" számláló (hajó
+// elsüllyedéskor nő) ettől teljesen FÜGGETLEN, csak vizuális jelző.
+const DIFFICULTY_TICK      = 10;    // mp – ennyi időnként lép a nehézség egy szintet
+const MAX_ENEMIES_BASE     = 6;     // egyidejűleg a vízen lévő ellenségek alap száma
+const MAX_ENEMIES_PER_TICK = 1;     // ennyivel nő a max ellenségszám szintenként
+const SPAWN_IVAL_BASE      = 1.15;  // alap idő két spawn között (mp)
+const SPAWN_IVAL_MIN       = 0.30;  // leggyorsabb lehetséges spawn időköz (mp)
+const SPAWN_IVAL_DECAY     = 0.07;  // ennyivel csökken a spawn időköz szintenként
+const ENEMY_DMG_MULT_STEP  = 0.10;  // +10% ellenség sebzés szintenként
+
+// Mely ellenségtípusok jöhetnek elő az adott nehézségi szinttől kezdve
+// (a korábban feloldott típusok is megmaradnak a pool-ban)
+const ENEMY_UNLOCK_BY_TIER = [
+  { tier:0, type:'basic' },
+  { tier:1, type:'fast'  },
+  { tier:3, type:'tank'  },
+];
+function getEnemyPool(tier) {
+  return ENEMY_UNLOCK_BY_TIER.filter(u=>u.tier<=tier).map(u=>u.type);
+}
+function getDifficulty(t) {
+  const tier = Math.floor(t / DIFFICULTY_TICK);
+  return {
+    tier,
+    maxEnemies: MAX_ENEMIES_BASE + tier*MAX_ENEMIES_PER_TICK,
+    spawnIval:  Math.max(SPAWN_IVAL_MIN, SPAWN_IVAL_BASE - tier*SPAWN_IVAL_DECAY),
+    dmgMult:    1 + tier*ENEMY_DMG_MULT_STEP,
+  };
+}
+
 // ─── SZIGETEK ─────────────────────────────────────────────────────
 const ISLANDS = [
   {x:2500,y:600,  rx:120,ry:92},
@@ -219,6 +268,30 @@ const ISLANDS = [
   {x:1200,y:1200, rx:23, ry:18},
 ];
 
+// ─── VÍZ DÍSZÍTŐ HULLÁMFOLTOK (statikus, csak vizuális) ────────────
+function isOnIsland(x,y,pad) {
+  for (const isl of ISLANDS) {
+    const ex=isl.rx+pad, ey=isl.ry+pad;
+    if (((x-isl.x)/ex)**2 + ((y-isl.y)/ey)**2 < 1) return true;
+  }
+  return false;
+}
+function genWaveSpots(n) {
+  const arr=[]; let tries=0;
+  while (arr.length<n && tries<n*25) {
+    tries++;
+    const seed = arr.length*37.13 + tries*7.91;
+    const rx = Math.abs(Math.sin(seed*12.9898)*43758.5453)%1;
+    const ry = Math.abs(Math.sin(seed*78.233) *43758.5453)%1;
+    const x = WM+60 + rx*(WW-2*WM-120);
+    const y = WM+60 + ry*(WH-2*WM-120);
+    if (isOnIsland(x,y,40)) continue;
+    arr.push({ x, y, phase: arr.length*0.83, scale: 0.7+((arr.length*0.37)%1)*0.9 });
+  }
+  return arr;
+}
+const WAVE_SPOTS = genWaveSpots(60);
+
 // ─── ELLENSÉG TÍPUSOK ─────────────────────────────────────────────
 // Testreszabáshoz lásd a fejléc ELLENSÉG TESTRESZABÁSA szekcióját!
 const ENEMY_CONFIGS = {
@@ -226,21 +299,6 @@ const ENEMY_CONFIGS = {
   fast:  { id:'fast',  w:16, h:16, speed:145, hp:22,  dmg:7,  color:'#CC6000' },
   tank:  { id:'tank',  w:34, h:34, speed:42,  hp:110, dmg:20, color:'#404090' },
 };
-
-// ─── HULLÁMDEFINÍCIÓK ─────────────────────────────────────────────
-// [típusNév, darab] párok tömbje per hullám
-const WAVE_DEFS = [
-  [['basic',5]],
-  [['basic',8]],
-  [['basic',8],  ['fast',3]],
-  [['basic',10], ['fast',4]],
-  [['basic',10], ['fast',4],  ['tank',1]],
-  [['basic',12], ['fast',5],  ['tank',2]],
-];
-function getWaveDef(n) {
-  if (n <= WAVE_DEFS.length) return WAVE_DEFS[n-1];
-  return [['basic',8+n*2], ['fast',Math.floor(n*1.5)], ['tank',Math.floor(n*0.6)]];
-}
 
 // ─── FEJLESZTÉS KÁRTYÁK ───────────────────────────────────────────
 // Testreszabáshoz: adj hozzá új elemeket ehhez a tömbhöz!
@@ -268,8 +326,8 @@ const PCFG = [
 // ─── ÁLLAPOT ──────────────────────────────────────────────────────
 let gt=0, state='MENU'; // 'MENU' | 'PLAYING' | 'CARD' | 'GAME_OVER'
 let ships=[], bullets=[], enemies=[];
-let waveNum=0, spawnQueue=[], spawnTimer=0, totalInWave=0;
-let waveBanner=null; // { text, timer }
+let roundNum=1, spawnTimer=0;
+let diff=getDifficulty(0);
 let cardPick=null;   // { playerIdx, cards }
 let cardFocused=0, cardNavCd=0;
 const cam = { x:WW/2, y:WH/2, zoom:1 };
@@ -308,12 +366,35 @@ addEventListener('keydown', e=>{
 });
 addEventListener('keyup', e=>keys.delete(e.code));
 
+// ─── KONTROLLER HOZZÁRENDELÉS ─────────────────────────────────────
+// Az elsőként csatlakoztatott kontroller irányítja az 1. Játékost,
+// a másodikként csatlakoztatott a 2. Játékost – függetlenül attól,
+// hogy a böngésző milyen nyers indexet ad nekik.
+let gamepadOrder = [];
+function refreshGamepadOrder() {
+  const pads = navigator.getGamepads?.() ?? [];
+  for (const p of pads) {
+    if (p && !gamepadOrder.includes(p.index)) gamepadOrder.push(p.index);
+  }
+}
+addEventListener('gamepadconnected', e=>{
+  if (!gamepadOrder.includes(e.gamepad.index)) gamepadOrder.push(e.gamepad.index);
+});
+addEventListener('gamepaddisconnected', e=>{
+  gamepadOrder = gamepadOrder.filter(i=>i!==e.gamepad.index);
+});
+function getPad(idx) {
+  const padIdx = gamepadOrder[idx];
+  if (padIdx == null) return undefined;
+  return (navigator.getGamepads?.() ?? [])[padIdx];
+}
+
 const kbCannon=[PCFG[0].angle, PCFG[1].angle];
 const DZ=0.13, dz=v=>Math.abs(v)<DZ?0:v;
 
 function readInput(idx,dt) {
   let lx=0,ly=0,rx=0,ry=0,fire=false,boost=false,hasStick=false;
-  const pad=(navigator.getGamepads?.()??[])[idx];
+  const pad=getPad(idx);
   if (pad?.connected) {
     lx=dz(pad.axes[0]??0); ly=dz(pad.axes[1]??0);
     const prx=dz(pad.axes[2]??0),pry=dz(pad.axes[3]??0);
@@ -420,7 +501,7 @@ function updateEnemy(e,dt) {
   e.x=Math.max(WM+er,Math.min(WW-WM-er,e.x));
   e.y=Math.max(WM+er,Math.min(WH-WM-er,e.y));
 
-  // Hajó ütközés
+  // Hajó ütközés – sebzés a NEHÉZSÉGI SZORZÓVAL (diff.dmgMult)
   for(const s of aliveShips){
     const dx=s.x-e.x,dy=s.y-e.y;
     const cr=SHIP_R+(e.cfg.w+e.cfg.h)/4;
@@ -429,7 +510,7 @@ function updateEnemy(e,dt) {
       e.vx=-(dx/len)*180; e.vy=-(dy/len)*180;
       e.stunTime=0.35;
       e.x=s.x-(dx/len)*cr*1.05; e.y=s.y-(dy/len)*cr*1.05;
-      if(s.hitCd<=0){s.hp=Math.max(0,s.hp-e.cfg.dmg);s.hitFlash=1;s.hitCd=HIT_CD;}
+      if(s.hitCd<=0){s.hp=Math.max(0,s.hp-e.cfg.dmg*diff.dmgMult);s.hitFlash=1;s.hitCd=HIT_CD;}
     }
   }
 }
@@ -437,16 +518,16 @@ function updateEnemy(e,dt) {
 // ─── FŐ UPDATE ────────────────────────────────────────────────────
 function update(dt) {
   gt+=dt;
+  diff=getDifficulty(gt);
 
-  // Hullám banner visszaszámlálás
-  if(waveBanner){waveBanner.timer-=dt;if(waveBanner.timer<=0)waveBanner=null;}
-
-  // Ellenség spawn
+  // Ellenség spawn – folyamatos; a nehézség a játékidővel nő (lásd getDifficulty)
   spawnTimer-=dt;
-  if(spawnTimer<=0&&spawnQueue.length>0){
+  if(spawnTimer<=0 && enemies.length<diff.maxEnemies){
+    const pool=getEnemyPool(diff.tier);
+    const type=pool[Math.floor(Math.random()*pool.length)];
     const cx=(ships[0].x+ships[1].x)/2, cy=(ships[0].y+ships[1].y)/2;
-    enemies.push(mkEnemy(spawnQueue.shift(),cx,cy));
-    spawnTimer=0.45+Math.random()*0.3;
+    enemies.push(mkEnemy(type,cx,cy));
+    spawnTimer=diff.spawnIval;
   }
 
   // Hajók
@@ -501,6 +582,7 @@ function update(dt) {
     // Halál ellenőrzés
     if(s.hp<=0&&s.alive){
       s.alive=false;
+      roundNum++; // csak vizuális jelző – a nehézséget NEM érinti
       // Ha mindkettő halott: game over
       if(!ships.some(sh=>sh.alive)){triggerGameOver();return;}
       // Különben: kártyaválasztás
@@ -530,12 +612,6 @@ function update(dt) {
     }
     if(rm)bullets.splice(i,1);
   }
-
-  // Hullám befejezve?
-  if(enemies.length===0&&spawnQueue.length===0&&state==='PLAYING'){
-    setTimeout(()=>{ if(state==='PLAYING'||state==='_WAVE_WAIT')startWave(waveNum+1); },1500);
-    state='_WAVE_WAIT'; // prevent double trigger
-  }
 }
 
 // ─── RAJZ SEGÉDFÜGGVÉNYEK ─────────────────────────────────────────
@@ -564,10 +640,29 @@ function drawWater() {
   for(let x=sx;x<=ex;x+=STEP){
     for(let y=sy;y<=ey;y+=STEP){
       const ph=Math.sin(x*0.0055+t)+Math.cos(y*0.0045+t*0.75);
-      const r=18+ph*4,a=Math.min(0.09,Math.max(0,0.036+ph*0.013));
-      ctx.strokeStyle=`rgba(110,190,255,${a})`;
+      const r=18+ph*4, a=Math.min(0.13,Math.max(0,0.05+ph*0.018));
+      ctx.strokeStyle=`rgba(165,218,255,${a})`;
       ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();
     }
+  }
+}
+
+// ─── VÍZ DÍSZÍTŐ HULLÁMFOLTOK ─────────────────────────────────────
+function drawWaveSpots() {
+  const W=canvas.width,H=canvas.height;
+  const hw=W/(2*cam.zoom)+60, hh=H/(2*cam.zoom)+60;
+  for(const sp of WAVE_SPOTS){
+    if(Math.abs(sp.x-cam.x)>hw||Math.abs(sp.y-cam.y)>hh)continue;
+    const t=gt*0.7+sp.phase;
+    const bob=Math.sin(t)*3;
+    const a=Math.max(0,0.13+0.07*Math.sin(t*0.6));
+    const w=20*sp.scale;
+    ctx.strokeStyle=`rgba(255,255,255,${a})`;
+    ctx.lineWidth=1.6;
+    ctx.beginPath();
+    ctx.moveTo(sp.x-w, sp.y+bob);
+    ctx.quadraticCurveTo(sp.x, sp.y-7*sp.scale+bob, sp.x+w, sp.y+bob);
+    ctx.stroke();
   }
 }
 
@@ -741,47 +836,30 @@ function drawShipHud(s,idx) {
     ctx.fillText(icons.slice(0,6).join(' '), idx===0?bx:bx+BW, hy+BH+16);
   }
 
-  // Lézerzöld jelölő nyíl a hajóra
+  // Szaggatott jelölő nyíl a hajóra
   ctx.strokeStyle=s.color+'88'; ctx.lineWidth=1;
   ctx.setLineDash([4,4]);
   ctx.beginPath(); ctx.moveTo(sx,sy-SHIP_H/2*cam.zoom-4); ctx.lineTo(sx,sy-SHIP_H/2*cam.zoom-18);
   ctx.stroke(); ctx.setLineDash([]);
 }
 
-function drawWaveHud() {
+function drawRoundHud() {
   const W=canvas.width;
   ctx.fillStyle='rgba(255,255,255,0.7)';
   ctx.font='bold 15px Fredoka,system-ui';
   ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`${waveNum}. hullám`, W/2, 12);
+  ctx.fillText(`${roundNum}. kör`, W/2, 12);
 
-  const left=enemies.length+spawnQueue.length;
   ctx.font='12px system-ui';
-  ctx.fillStyle=`rgba(255,255,255,0.4)`;
-  ctx.fillText(`${left} ellenség`, W/2, 34);
-}
-
-function drawWaveBanner() {
-  if(!waveBanner||waveBanner.timer<=0)return;
-  const W=canvas.width,H=canvas.height;
-  const t=waveBanner.timer, max=waveBanner.maxTimer;
-  const alpha=Math.min(1,t*3)*Math.min(1,(t/max)*5);
-  ctx.globalAlpha=Math.max(0,alpha);
-  ctx.font='bold 52px Fredoka,system-ui';
-  ctx.fillStyle='#ffd166';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(waveBanner.text, W/2, H/2-55);
-  ctx.font='18px Inter,system-ui';
-  ctx.fillStyle='rgba(255,255,255,0.65)';
-  ctx.fillText('Készülj!', W/2, H/2-5);
-  ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.fillText(`${enemies.length} ellenség a vízen · ${diff.tier+1}. nehézségi szint`, W/2, 34);
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────
 function render() {
   const W=canvas.width,H=canvas.height;
-  // Víz alap
-  ctx.fillStyle='#0b2240'; ctx.fillRect(0,0,W,H);
+  // Víz alap (világosabb)
+  ctx.fillStyle='#12426f'; ctx.fillRect(0,0,W,H);
 
   // Kamera transform
   ctx.save();
@@ -790,6 +868,7 @@ function render() {
   ctx.translate(-cam.x,-cam.y);
 
   drawWater();
+  drawWaveSpots();
   drawLand();
   for(const isl of ISLANDS) drawIsland(isl);
   for(const s of ships) drawWake(s);
@@ -801,8 +880,7 @@ function render() {
 
   // HUD
   for(let i=0;i<2;i++) drawShipHud(ships[i],i);
-  drawWaveHud();
-  drawWaveBanner();
+  drawRoundHud();
 }
 
 // ─── KÁRTYA PICK ──────────────────────────────────────────────────
@@ -811,6 +889,7 @@ function triggerCardPick(playerIdx) {
   cardPick={playerIdx,cards:pick4()};
   cardFocused=0; cardNavCd=0;
   const s=ships[playerIdx];
+  document.getElementById('cardRoundLabel').textContent=`${roundNum}. Kör`;
   const lbl=document.getElementById('cardPlayerLabel');
   lbl.textContent=s.name; lbl.style.color=s.color;
   const row=document.getElementById('cardsRow');
@@ -861,12 +940,12 @@ function respawnShip(idx) {
 function pollCardInput(dt) {
   cardNavCd=Math.max(0,cardNavCd-dt);
   const idx=cardPick?.playerIdx??0;
-  const pad=(navigator.getGamepads?.()??[])[idx];
+  const pad=getPad(idx);
   const lx=pad?.axes[0]??0;
   const dl=pad?.buttons[14]?.pressed??false;
   const dr=pad?.buttons[15]?.pressed??false;
   const aBtn=pad?.buttons[0]?.pressed??false;
-  // Keyboard (mindkét játékos)
+  // Billentyűzet (mindkét játékos)
   const kl=keys.has('ArrowLeft')||keys.has('KeyA')||keys.has('Numpad4');
   const kr=keys.has('ArrowRight')||keys.has('KeyD')||keys.has('Numpad6');
   const kc=keys.has('Enter')||keys.has('Space')||keys.has('Numpad0');
@@ -881,35 +960,22 @@ function pollCardInput(dt) {
   }
 }
 
-// ─── HULLÁM KEZELÉS ───────────────────────────────────────────────
-function startWave(n) {
-  waveNum=n; state='PLAYING';
-  enemies=[]; bullets=[];
-  const def=getWaveDef(n);
-  spawnQueue=[];
-  for(const[type,count]of def) for(let i=0;i<count;i++) spawnQueue.push(type);
-  spawnQueue.sort(()=>Math.random()-0.5);
-  totalInWave=spawnQueue.length;
-  spawnTimer=1.2;
-  const maxTimer=2.2;
-  waveBanner={text:`${n}. Hullám`,timer:maxTimer,maxTimer};
-}
-
 // ─── GAME OVER ────────────────────────────────────────────────────
 function triggerGameOver() {
   state='GAME_OVER';
-  document.getElementById('goSub').textContent=`${waveNum}. hullámig jutottatok el.`;
+  const mins=Math.floor(gt/60), secs=Math.floor(gt%60).toString().padStart(2,'0');
+  document.getElementById('goSub').textContent=`${roundNum}. körig jutottatok, ${mins}:${secs} alatt.`;
   document.getElementById('goScreen').classList.remove('hidden');
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────────
 function loop(ts) {
-  if(rafId===null)return; // stopped
+  if(rafId===null)return;
   if(prevTs===null)prevTs=ts;
   const dt=Math.min((ts-prevTs)/1000,0.05);
   prevTs=ts;
 
-  if(state==='PLAYING'||state==='_WAVE_WAIT') {
+  if(state==='PLAYING') {
     update(dt);
     updateCamera(dt);
   } else if(state==='CARD') {
@@ -926,18 +992,20 @@ function initGame() {
   ships=PCFG.map(c=>mkShip(c));
   ships.forEach(s=>s.wake=[]);
   bullets=[]; enemies=[];
-  gt=0; prevTs=null; waveNum=0;
-  spawnQueue=[]; cam.x=WW/2; cam.y=WH/2; cam.zoom=1.0;
+  gt=0; prevTs=null; roundNum=1;
+  spawnTimer=0; diff=getDifficulty(0);
+  cam.x=WW/2; cam.y=WH/2; cam.zoom=1.0;
   kbCannon[0]=PCFG[0].angle; kbCannon[1]=PCFG[1].angle;
 }
 
 function startGame() {
   if(rafId)cancelAnimationFrame(rafId);
+  refreshGamepadOrder();
   initGame();
+  state='PLAYING';
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('goScreen').classList.add('hidden');
   document.getElementById('cardScreen').classList.add('hidden');
-  startWave(1);
   rafId=requestAnimationFrame(loop);
 }
 
