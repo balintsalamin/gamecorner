@@ -7,6 +7,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <!-- App-szerű viselkedés (kezdőképernyőről indítva, böngészősáv nélkül).
+       Lásd a README "App mód" szakaszát a részletekért. -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#14141f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gamecorner">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
   <header class="hub-header">
@@ -34,6 +44,14 @@
       <h2>Hajócsata</h2>
       <p>Osztott képernyős top-down hajóütközet. Kontroller ajánlott.</p>
       <span class="tile-tag">2 játékos</span>
+    </a>
+
+    <a class="game-tile" href="games/hollandkocsma/index.html">
+      <div class="tile-stripe"></div>
+      <div class="tile-icon">🍻</div>
+      <h2>Holland kocsma</h2>
+      <p>Klasszikus lerakós kártyajáték francia kártyával, testreszabható szabályokkal.</p>
+      <span class="tile-tag">2–8 játékos</span>
     </a>
 
     <div class="game-tile placeholder">

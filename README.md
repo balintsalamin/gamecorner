@@ -2,8 +2,11 @@
 
 Ingyenes, GitHub Pages-en hosztolt játékgyűjtemény. A főoldalon ikonok
 formájában találod a játékokat, rájuk kattintva egy aloldalon nyílik meg az
-adott játék. Az első játék egy **multiplayer UNO**, amiben kb. minden
-házi szabály be- és kikapcsolható.
+adott játék. Jelenleg három játék van benne: egy **multiplayer Colorcards**
+(UNO-szerű kártyajáték), egy **Hajócsata**, és egy **Holland kocsma**
+(klasszikus lerakós kártyajáték) – mindegyikben kb. minden házi szabály be-
+és kikapcsolható, és a weboldal a telefon kezdőképernyőjéről elindítva
+appként viselkedik (lásd az "App mód" szakaszt).
 
 ---
 
@@ -40,14 +43,28 @@ megoldás nem alkalmas – ahhoz egy valódi backend (pl. Cloud Functions) kelle
 game-hub/
 ├── index.html              ← főoldal, játék ikonok
 ├── style.css                ← főoldal stílus
+├── manifest.json              ← PWA manifest ("App mód" – lásd lent)
+├── icons/                      ← App-ikonok (helyőrzők, lásd "App mód")
+│   ├── icon-192.png
+│   └── icon-512.png
 ├── firestore.rules           ← Firestore biztonsági szabályok (lásd lent)
+├── test-engine.mjs            ← fejlesztői tesztek a Colorcards motorhoz (opcionális)
+├── test-hollandkocsma-engine.mjs ← fejlesztői tesztek a Holland kocsma motorhoz (opcionális)
 ├── README.md                 ← ez a fájl
 └── games/
-    └── uno/
-        ├── index.html         ← UNO képernyők (lobbi, játéktábla, stb.)
-        ├── style.css           ← UNO stílus
-        ├── firebase-config.js  ← IDE KELL BEÍRNOD a saját Firebase configodat
-        ├── game-engine.js      ← a teljes UNO szabálykönyv (tiszta logika)
+    ├── uno/                    ← ez a mappa a "Colorcards" játék (a régi UNO elnevezés maradványa)
+    │   ├── index.html         ← Colorcards képernyők (lobbi, játéktábla, stb.)
+    │   ├── style.css           ← Colorcards stílus
+    │   ├── firebase-config.js  ← IDE KELL BEÍRNOD a saját Firebase configodat
+    │   ├── game-engine.js      ← a teljes Colorcards szabálykönyv (tiszta logika)
+    │   └── main.js             ← UI + Firebase összekötés
+    ├── battleships/
+    │   └── index.html          ← Hajócsata (önálló fájlban, saját motorral)
+    └── hollandkocsma/
+        ├── index.html         ← Holland kocsma képernyők (lobbi, felkészülés, játéktábla, stb.)
+        ├── style.css           ← Holland kocsma stílus
+        ├── firebase-config.js  ← IDE IS be kell írnod a saját Firebase configodat
+        ├── game-engine.js      ← a teljes Holland kocsma szabálykönyv (tiszta logika)
         └── main.js             ← UI + Firebase összekötés
 ```
 
@@ -96,8 +113,11 @@ game-hub/
 
 ## 3. lépés – Config beillesztése a kódba
 
-Nyisd meg a `games/uno/firebase-config.js` fájlt, és írd át a placeholder
-értékeket a 2. lépésben kapott `firebaseConfig` objektum valódi értékeire:
+Nyisd meg a `games/uno/firebase-config.js` **és** a
+`games/hollandkocsma/firebase-config.js` fájlt, és írd át bennük a
+placeholder értékeket a 2. lépésben kapott `firebaseConfig` objektum valódi
+értékeire (mindkét fájlban ugyanaz az érték kerül – a két játék ugyanazt a
+Firebase projektet használja, csak külön Firestore kollekciót):
 
 ```js
 export const firebaseConfig = {
@@ -129,21 +149,58 @@ be a szükséges JS modulokat.
    abban a kód előre kitöltődik).
 4. Amikor mindenki csatlakozott, bárki elindíthatja a játékot a lobbiban.
 
+> **Egyedül tesztelnél?** Mindkét kártyajáték (Colorcards, Holland kocsma)
+> rejt egy fejlesztői "bot módot": kattints 10×-et gyorsan a kezdőképernyő
+> címére, megjelenik egy 🛠️ gomb jobb alul – ezzel buta botokat adhatsz a
+> lobbihoz, akik maguktól lépnek. (A Colorcards game-engine.js-t a
+> `node test-engine.mjs`, a Holland kocsmáét a
+> `node test-hollandkocsma-engine.mjs` paranccsal tesztelheted Node.js-szel,
+> a böngészőtől függetlenül.)
+
+---
+
+## App mód (kezdőképernyőről indítva, böngészősáv nélkül)
+
+A `manifest.json` + a játékoldalak `<head>`-jébe tett meta tag-ek miatt, ha
+valaki a telefonján **"Hozzáadás a kezdőképernyőhöz"** (Android Chrome) vagy
+**"Add to Home Screen"** (iOS Safari, a Megosztás gombból) opciót választja
+a weboldalon, az így létrejövő ikon böngészősáv nélkül, önálló alkalmazásként
+nyílik meg.
+
+- Ezt bármelyik oldalról megteheted (főoldal vagy egy konkrét játék) – mind
+  a hármat felkészítettük rá.
+- **Ikon cseréje**: az `icons/icon-192.png` és `icons/icon-512.png` egyelőre
+  helyőrző "GC" ikonok. Cseréld le őket ugyanazzal a fájlnévvel és
+  méretekkel (négyzet alakú PNG, lekerekített sarok nélkül – azt az
+  operációs rendszer maga rajzolja rá) saját logódra.
+- **Kártyahátlap**: a Holland kocsma lefordított lapjainak hátoldala is egy
+  egyszerű, CSS-sel rajzolt mintázat (lásd `games/hollandkocsma/style.css`,
+  a `.card-back` szabály feletti komment jelzi) – ha szeretnél saját
+  kártyahát-képet, ott tudod becserélni egy `background-image`-re.
+- Ha nem szeretnéd ezt a funkciót, egyszerűen töröld a `<link rel="manifest">`
+  és `apple-mobile-web-app-*` sorokat a `<head>`-ekből.
+
 ---
 
 ## Hogyan adj hozzá új játékot a főoldalhoz?
 
 1. Hozz létre egy új mappát: `games/<jatek-neve>/` a saját
-   `index.html`/`style.css`/JS fájljaiddal.
-2. A gyökér `index.html`-ben másold le a meglévő UNO `<a class="game-tile">`
+   `index.html`/`style.css`/JS fájljaiddal. (A `games/hollandkocsma/` mappa
+   jó kiindulási példa, ha multiplayer, testreszabható szabályú,
+   Firebase-es játékot tervezel.)
+2. A gyökér `index.html`-ben másold le egy meglévő `<a class="game-tile">`
    blokkot, és:
    - állítsd a `href`-et `games/<jatek-neve>/index.html`-re,
    - cseréld le az ikont (emoji) és a leírást.
 3. (Opcionális) ha a játék is multiplayer és Firebase-t használ, a
    `games/uno/firebase-config.js`-hez hasonlóan a saját mappájában hozz létre
    egy configot – nyugodtan használhatja **ugyanazt** a Firebase projektet,
-   csak más Firestore kollekciót (pl. `rooms2`), és bővítsd a
-   `firestore.rules`-t egy hasonló `match` blokkal az új kollekcióra.
+   csak más Firestore kollekciót (pl. `hkRooms`, ahogy a Holland kocsma is
+   teszi), és bővítsd a `firestore.rules`-t egy hasonló `match` blokkal az
+   új kollekcióra.
+4. Az "App mód" automatikusan működni fog az új játékra is, ha a `<head>`-be
+   bemásolod a meglévő játékok `manifest`/`apple-mobile-web-app-*` meta
+   tag-jeit (lásd lent).
 
 ---
 
@@ -176,6 +233,38 @@ jogosultság, hogy senki ne ragadjon be, ha az első csatlakozó kiesik).
   mint a Kihagyás (a soron lévő játékos újra jön).
 - Ha elfogy a húzópakli, a dobott lapok (a legfelső kivételével)
   megkeverve újra húzópakli lesznek.
+
+---
+
+## Holland kocsma szabályok – mit lehet testreszabni?
+
+A szabályok forrása: a [Holland kocsma Wikipédia-cikke](https://hu.wikipedia.org/wiki/Holland_kocsma_(k%C3%A1rtyaj%C3%A1t%C3%A9k))
+(nemzetközi nevein Shithead / Karma / Palace / Shed). A lobbiban – a
+Colorcards-hoz hasonlóan – minden szabály élőben módosítható, amíg a játék
+el nem indul, és játék közben bármikor megnyitható egy "Gyorstalpaló"
+(krétatábla stílusú szabály-összefoglaló) a játéktábla tetején lévő
+"📋 Szabályok" gombbal.
+
+| Szabály | Leírás |
+|---|---|
+| **Lapok az asztalon (le / fel)** | Hány lapot kap mindenki lefordítva, és ugyanennyit rájuk felfordítva (alap: 3). |
+| **Kezdő lapok a kézben** | Hány lapot kap mindenki kezdéskor, és a húzópakliból mindig ennyire egészíti ki, amíg az tart (alap: 3). |
+| **Kettes = újraindító** | A 2-es bármilyen lapra lerakható, és utána bármilyen lap jöhet. |
+| **Tízes = égető lap** | A 10-es bármilyen lapra lerakható; elégeti (kiveszi a játékból) a teljes dobott paklit, és újra ugyanaz a játékos jön. |
+| **Ötös = visszafordító** | Az 5-ös bármilyen lapra lerakható; utána a következő lapnak legfeljebb ötösnek kell lennie (eredetileg opcionális szabály, alapból ki van kapcsolva). |
+| **Négy egyforma lap éget** | Ha a dobott pakli tetején (akár több lépésben) összegyűlik 4 egyforma értékű lap, a pakli automatikusan elég. |
+| **Páros lerakás tiltása** | Két egyforma lapot nem rakhatsz le együtt – csak egyesével, vagy hárommal/többel egyszerre (eredetileg opcionális nehezítés). |
+| **Vak húzás megengedett** | Ha nincs lerakható lapod, húzhatsz vakon a pakli tetejéről, és megpróbálhatod azonnal lejátszani – ha nem jó, az egész dobott paklit fel kell venned. |
+| **Pakli bármikor felvehető** | Akkor is felveheted a teljes dobott paklit, ha lenne lerakható lapod – néha taktikus döntés (blöff) lehet. |
+
+### Standard menet, ami mindig érvényes
+- A cél: szabadulj meg az összes lapodtól – előbb a kezedből (mindig
+  húzol, amíg a pakliban van lap), utána a felfordított, végül a
+  lefordított (vakon kijátszott) asztali lapjaidból.
+- Aki nem tud lerakni, felveszi az egész dobott paklit a kezébe.
+- Aki elsőként kiürül, megússza a kört; aki utoljára marad lapokkal, ő
+  veszít. A lobbiban "Következő kör" gombbal újra lehet osztani – a
+  vesztések kör-számonként összeadódnak, amíg vissza nem léptek a lobbiba.
 
 ---
 

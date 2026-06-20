@@ -1,13 +1,18 @@
 // ============================================================================
-// Firestore biztonsági szabályok – UNO szobák
+// Firestore biztonsági szabályok – Gamecorner szobák (Colorcards, Holland kocsma)
 // ============================================================================
 // Másold be ezt a Firebase konzolban:
 // Build → Firestore Database → Rules fül → illeszd be → Publish
 //
 // Mit csinál ez?
-// - Csak a "rooms" kollekcióhoz enged hozzáférést, és csak akkor, ha a
-//   dokumentum ID-ja pontosan 4 karakteres (ez a szobakód formátuma).
+// - Csak a "rooms" (Colorcards) és a "hkRooms" (Holland kocsma) kollekciókhoz
+//   enged hozzáférést, és csak akkor, ha a dokumentum ID-ja pontosan 4
+//   karakteres (ez a szobakód formátuma).
 // - Mindent mást (más kollekciókat) letilt.
+//
+// Új játék hozzáadásakor: ha az új játék saját Firestore kollekciót használ
+// (lásd a játék main.js-ében a ROOMS_COLLECTION nevét), másolj be ide egy
+// hasonló match blokkot az új kollekció nevével.
 //
 // FONTOS – ennek a projektnek a korlátai:
 // Nincs bejelentkezés/azonosítás, így bárki, aki ismeri (vagy kitalálja) egy
@@ -23,6 +28,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /rooms/{roomId} {
+      allow read, write: if roomId.size() == 4;
+    }
+
+    // Holland kocsma szobái – külön kollekció, hogy ne keveredjen össze a
+    // Colorcards szobakódjaival, ugyanazokkal a korlátokkal.
+    match /hkRooms/{roomId} {
       allow read, write: if roomId.size() == 4;
     }
 
