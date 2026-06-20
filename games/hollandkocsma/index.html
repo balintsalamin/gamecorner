@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Holland kocsma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- App-szerű viselkedés (kezdőképernyőről indítva, böngészősáv nélkül) -->
+  <link rel="manifest" href="../../manifest.json">
+  <meta name="theme-color" content="#1a120b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="H. kocsma">
+  <link rel="apple-touch-icon" href="../../icons/icon-192.png">
+</head>
+<body>
+  <a class="back-link" href="../../index.html">← Játékok</a>
+
+  <!-- ============================== KEZDŐKÉPERNYŐ ============================== -->
+  <section id="screen-home" class="screen active">
+    <div class="card-panel">
+      <h1 class="title">🍻 Holland kocsma</h1>
+      <p class="subtitle">Multiplayer kártyajáték – francia kártyával, testreszabható szabályokkal</p>
+
+      <label class="field">
+        <span>A neved</span>
+        <input id="input-name" type="text" maxlength="16" placeholder="pl. Anna" autocomplete="off">
+      </label>
+
+      <button id="btn-create-room" class="btn btn-primary">Új szoba létrehozása</button>
+
+      <div class="divider"><span>vagy</span></div>
+
+      <label class="field">
+        <span>Csatlakozás kóddal</span>
+        <input id="input-room-code" type="text" maxlength="5" placeholder="pl. AB12" autocomplete="off" class="uppercase">
+      </label>
+      <button id="btn-join-room" class="btn btn-secondary">Csatlakozás</button>
+
+      <p id="home-error" class="error-text"></p>
+
+      <button id="btn-show-rules-home" class="btn btn-rules">📋 Gyorstalpaló – mi ez a játék?</button>
+    </div>
+  </section>
+
+  <!-- ============================== LOBBI ============================== -->
+  <section id="screen-lobby" class="screen">
+    <div class="card-panel">
+      <div class="title-row">
+        <h1 class="title">Lobbi</h1>
+        <button id="btn-show-rules-lobby" class="btn btn-small btn-rules">📋 Szabályok</button>
+      </div>
+
+      <div class="room-code-box">
+        <div>
+          <span class="room-code-label">Szoba kódja</span>
+          <span id="room-code-display" class="room-code"></span>
+        </div>
+        <button id="btn-copy-code" class="btn btn-small">Megosztás / másolás</button>
+      </div>
+
+      <h2 class="section-title">Játékosok</h2>
+      <ul id="player-list" class="player-list"></ul>
+
+      <h2 class="section-title">Szabályok</h2>
+      <p class="hint">Bárki módosíthatja a szabályokat, amíg a játék el nem indul.</p>
+      <div id="settings-panel" class="settings-panel"></div>
+
+      <button id="btn-start-game" class="btn btn-primary">Játék indítása</button>
+      <p id="lobby-hint" class="hint"></p>
+      <button id="btn-leave-lobby" class="btn btn-text">Kilépés a szobából</button>
+    </div>
+  </section>
+
+  <!-- ============================== FELKÉSZÜLÉS (lapok rendezése) ============================== -->
+  <section id="screen-setup" class="screen">
+    <div class="card-panel">
+      <div class="title-row">
+        <h1 class="title">Rendezd a lapjaid</h1>
+        <button id="btn-show-rules-setup" class="btn btn-small btn-rules">📋 Szabályok</button>
+      </div>
+      <p class="subtitle">
+        Érints meg egy kézben lévő lapot, majd egy felfordított asztali lapot –
+        ezzel megcseréled őket. Annyiszor teheted, amennyiszer csak szeretnéd.
+        A lefordított lapjaidat nem láthatod előre.
+      </p>
+
+      <div class="setup-zone-label">✋ A kezedben lévő lapok</div>
+      <div id="setup-hand" class="setup-row"></div>
+
+      <div class="setup-zone-label">🂠 A felfordított asztali lapjaid (mindenki látja)</div>
+      <div id="setup-faceup" class="setup-row"></div>
+
+      <div class="setup-zone-label">🔒 A lefordított lapjaid</div>
+      <div id="setup-facedown" class="setup-row"></div>
+
+      <button id="btn-setup-ready" class="btn btn-primary">Kész vagyok</button>
+      <p id="setup-status" class="hint"></p>
+
+      <h2 class="section-title">Kik készültek el?</h2>
+      <ul id="ready-list" class="ready-list"></ul>
+    </div>
+  </section>
+
+  <!-- ============================== JÁTÉK ============================== -->
+  <section id="screen-game" class="screen">
+    <div class="game-wrap">
+
+      <div class="game-topbar">
+        <div class="room-pill">Szoba: <strong id="game-room-code"></strong></div>
+        <div class="round-pill" id="round-pill"></div>
+        <button id="btn-show-rules-game" class="btn btn-small btn-rules">📋 Szabályok</button>
+      </div>
+
+      <div id="opponents-list" class="opponents-list"></div>
+
+      <div class="table-area">
+        <div class="pile-group">
+          <div id="draw-pile" class="card card-back">
+            <span id="deck-count" class="deck-count"></span>
+          </div>
+          <span class="pile-label">Húzópakli</span>
+        </div>
+
+        <div class="center-info">
+          <div id="modifier-badges"></div>
+          <div id="turn-indicator" class="turn-indicator"></div>
+        </div>
+
+        <div class="pile-group">
+          <div id="discard-pile" class="card"></div>
+          <span class="pile-label">Dobott lap</span>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button id="btn-pickup-pile" class="btn btn-secondary hidden">Pakli felvétele</button>
+        <button id="btn-blind-draw" class="btn btn-warning hidden">🎲 Vak húzás</button>
+      </div>
+      <button id="btn-force-skip" class="btn btn-text hidden">Lecsatlakozott játékos átugrása →</button>
+
+      <div id="game-log" class="game-log"></div>
+
+      <div class="my-table-zones">
+        <div class="my-zone-col">
+          <div id="my-facedown-label" class="my-zone-label">🔒 Lefordított (<span id="my-facedown-count">0</span>)</div>
+          <div id="my-facedown" class="zone-cards"></div>
+        </div>
+        <div class="my-zone-col">
+          <div id="my-faceup-label" class="my-zone-label">🂠 Felfordított</div>
+          <div id="my-faceup" class="zone-cards"></div>
+        </div>
+      </div>
+
+      <div class="hand-wrap">
+        <div class="hand-label-row">
+          <span id="my-hand-label" class="hand-label">A kezed</span>
+          <span id="my-hand-count" class="hand-count"></span>
+        </div>
+        <div id="hand-container" class="hand-container"></div>
+        <button id="btn-play-selected" class="btn btn-primary hidden">Lerakás</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== KÖR VÉGE ============================== -->
+  <section id="screen-end" class="screen">
+    <div class="card-panel">
+      <h1 id="end-title" class="title"></h1>
+      <p id="end-subtitle" class="subtitle"></p>
+
+      <h2 class="section-title">Ki hányadik lett</h2>
+      <ul id="placement-list" class="placement-list"></ul>
+
+      <h2 class="section-title">Vesztes-statisztika ebben a partiban</h2>
+      <table id="end-scores" class="score-table"></table>
+
+      <button id="btn-next-round" class="btn btn-primary">Következő kör</button>
+      <button id="btn-new-game" class="btn btn-secondary">Vissza a lobbiba</button>
+      <a href="../../index.html" class="btn btn-text">Vissza a főmenübe</a>
+    </div>
+  </section>
+
+  <!-- ============================== MODÁLOK ============================== -->
+  <div id="modal-rules" class="modal hidden">
+    <div class="modal-box">
+      <div class="chalkboard">
+        <h2>Holland kocsma</h2>
+        <div class="chalk-sub">gyorstalpaló</div>
+
+        <div class="chalk-section">
+          <h3>A cél</h3>
+          <p>Szabadulj meg az összes lapodtól – előbb a kezedből, aztán a felfordított,
+            végül a lefordított asztali lapjaidból. Aki utoljára marad lappal, veszít.</p>
+        </div>
+
+        <div class="chalk-section">
+          <h3>Lerakás</h3>
+          <p>A lerakott lapod értéke legyen egyenlő vagy nagyobb, mint a dobott pakli
+            tetején lévő lapé – kivéve a lenti "vad" lapokat. Egyszerre több egyforma
+            értékű lapot is lerakhatsz.</p>
+        </div>
+
+        <div class="chalk-section">
+          <h3>Ha nincs jó lapod</h3>
+          <p>Fel kell venned az egész dobott paklit a kezedbe – utána az ellenfél jön.</p>
+        </div>
+
+        <div class="chalk-section">
+          <h3>Ennél a partinál érvényes extra szabályok</h3>
+          <div id="rules-summary"></div>
+        </div>
+      </div>
+      <button id="btn-close-rules" class="btn btn-secondary">Bezárás</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

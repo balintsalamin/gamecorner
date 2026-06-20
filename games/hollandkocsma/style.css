@@ -1,0 +1,794 @@
+/* ============================================================================
+   Holland kocsma – stílusok
+   ============================================================================
+   Vizuális irány: meleg, fa-paneles "kocsma" hangulat (sötét mahagóni háttér,
+   sörarany kiemelőszín, krém pasziánsz-lapok), a "gyorstalpaló" szabálymodál
+   pedig egy kocsmai krétatáblaként jelenik meg – ez a játék "aláírása".
+   ============================================================================ */
+
+:root {
+  --bg: #1a120b;
+  --surface: #271a10;
+  --surface-2: #3a2a18;
+  --surface-3: #4d3a24;
+  --text: #f5e8d3;
+  --text-dim: #c2a987;
+  --accent: #e0a526;
+  --accent-dark: #a87a1a;
+  --danger: #c1432f;
+  --felt: #2f4a34;
+  --felt-dark: #213429;
+
+  --card-face: #f3e6c9;
+  --card-edge: #d8c192;
+  --card-red: #a4332a;
+  --card-black: #2a2118;
+  --card-back-a: #5a2a22;
+  --card-back-b: #7a3a2e;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-chalk: 'Caveat', cursive;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top, #2a1c10 0%, var(--bg) 65%);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  padding: 16px;
+  padding-bottom: 32px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+h1, h2 { font-family: var(--font-display); margin: 0; }
+
+.back-link {
+  display: inline-block;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+.back-link:hover { color: var(--accent); }
+
+/* ---------------------------------------------------------------------- */
+/* Screens                                                                  */
+/* ---------------------------------------------------------------------- */
+.screen { display: none; }
+.screen.active { display: block; animation: fade-in 0.2s ease; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-panel {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+
+.title { font-size: 1.8rem; font-weight: 700; }
+.title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.subtitle { color: var(--text-dim); margin-top: 4px; margin-bottom: 20px; }
+.section-title { font-size: 1.1rem; margin-top: 24px; margin-bottom: 8px; }
+.hint { color: var(--text-dim); font-size: 0.85rem; line-height: 1.4; }
+.error-text { color: var(--danger); font-size: 0.9rem; min-height: 1.2em; margin-top: 8px; }
+
+/* ---------------------------------------------------------------------- */
+/* Forms & buttons                                                          */
+/* ---------------------------------------------------------------------- */
+.field {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+.field span { display: block; margin-bottom: 6px; }
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--surface-3);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.field input:focus { outline: 2px solid var(--accent); }
+.uppercase { text-transform: uppercase; letter-spacing: 0.1em; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin: 18px 0;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--surface-3);
+}
+.divider span { padding: 0 10px; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.15s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary { background: var(--accent); color: #2a1a00; }
+.btn-secondary { background: var(--surface-3); color: var(--text); }
+.btn-warning { background: var(--danger); color: #fff; }
+.btn-text {
+  background: transparent; color: var(--text-dim);
+  text-align: center; text-decoration: none;
+}
+.btn-small {
+  width: auto; display: inline-block;
+  padding: 8px 12px; font-size: 0.85rem; margin: 0;
+  background: var(--surface-3); color: var(--text);
+}
+.btn-rules {
+  background: var(--felt);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.hidden { display: none !important; }
+
+/* ---------------------------------------------------------------------- */
+/* Lobby                                                                    */
+/* ---------------------------------------------------------------------- */
+.room-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 6px;
+}
+.room-code-label { display: block; font-size: 0.75rem; color: var(--text-dim); }
+.room-code { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: 0.15em; color: var(--accent); }
+
+.player-list { list-style: none; padding: 0; margin: 0; }
+.player-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.player-list .tag {
+  font-size: 0.7rem;
+  color: var(--accent-dark);
+  background: rgba(224, 165, 38, 0.15);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+}
+
+.settings-panel { margin-top: 4px; }
+.setting-row {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.setting-row .setting-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.setting-row label.setting-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.setting-row .hint { margin-top: 6px; }
+
+.setting-row select,
+.setting-row input[type="number"] {
+  background: var(--surface-3);
+  color: var(--text);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.95rem;
+}
+.setting-row input[type="number"] { width: 70px; }
+
+/* toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider {
+  position: absolute; cursor: pointer;
+  inset: 0;
+  background: var(--surface-3);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+.switch .slider::before {
+  content: '';
+  position: absolute;
+  height: 20px; width: 20px;
+  left: 3px; bottom: 3px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(20px); background: #2a1a00; }
+
+/* ---------------------------------------------------------------------- */
+/* Setup (lap-rendezés a kör elején)                                       */
+/* ---------------------------------------------------------------------- */
+.setup-zone-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin: 18px 0 8px;
+  font-weight: 600;
+}
+.setup-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ready-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.ready-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+.ready-badge { font-size: 0.95rem; }
+
+/* ---------------------------------------------------------------------- */
+/* Game board                                                               */
+/* ---------------------------------------------------------------------- */
+.game-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+.game-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.room-pill, .round-pill {
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+.opponents-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.opponent-chip {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  min-width: 116px;
+  text-align: center;
+  border: 2px solid transparent;
+}
+.opponent-chip.active-turn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.opponent-chip.finished { opacity: 0.55; }
+.opponent-chip .name { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; margin: 0 auto; }
+.opponent-chip .offline-tag { color: var(--text-dim); font-size: 0.68rem; }
+.opponent-chip .finished-tag { color: var(--accent); font-size: 0.7rem; font-weight: 700; }
+.opponent-chip .zone-row {
+  display: flex; justify-content: center; align-items: center; gap: 4px;
+  margin-top: 5px;
+}
+.opponent-chip .zone-label { font-size: 0.62rem; color: var(--text-dim); margin-top: 2px; }
+
+/* Mini-kéz (kártyaszám absztrakt jelzése) */
+.mini-hand { display: flex; justify-content: center; align-items: center; min-height: 14px; }
+.mini-card {
+  width: 9px; height: 13px; border-radius: 2px;
+  background: repeating-linear-gradient(135deg, var(--card-back-a) 0 3px, var(--card-back-b) 3px 6px);
+  border: 1px solid rgba(255,255,255,0.25);
+  margin-left: -5px; flex-shrink: 0;
+}
+.mini-card:first-child { margin-left: 0; }
+.mini-overflow { font-size: 0.6rem; color: var(--text-dim); margin-left: 4px; }
+
+.mini-faceup { display: flex; justify-content: center; gap: 2px; flex-wrap: wrap; }
+.mini-faceup .tiny-card { width: 16px; height: 22px; font-size: 0.5rem; }
+
+/* ---------------------------------------------------------------------- */
+/* Asztal (felső, közös pakli + dobott lap)                                */
+/* ---------------------------------------------------------------------- */
+.table-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: radial-gradient(circle at 50% 30%, var(--felt) 0%, var(--felt-dark) 100%);
+  border: 1px solid rgba(0,0,0,0.3);
+  border-radius: var(--radius);
+  padding: 18px 12px;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.35);
+}
+
+.pile-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pile-label { font-size: 0.72rem; color: rgba(245,232,211,0.65); }
+
+.center-info { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 90px; }
+.modifier-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.modifier-badge.reset { background: var(--accent); color: #2a1a00; }
+.modifier-badge.reverse { background: var(--danger); color: #fff; }
+.modifier-badge.burned { background: rgba(0,0,0,0.4); color: var(--text-dim); }
+.turn-indicator {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  min-height: 1.4em;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Kártyák – krém pasziánsz-lap, piros/fekete jelekkel                      */
+/* ---------------------------------------------------------------------- */
+.card {
+  width: 56px;
+  height: 80px;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--card-face);
+  border: 1px solid var(--card-edge);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+  user-select: none;
+  color: var(--card-black);
+}
+.card.suit-red { color: var(--card-red); }
+.card .card-pip { font-size: 1.5rem; line-height: 1; }
+.card .card-corner {
+  position: absolute;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.05;
+  text-align: center;
+}
+.card .card-corner.tl { top: 4px; left: 5px; }
+.card .card-corner.br { bottom: 4px; right: 5px; transform: rotate(180deg); }
+
+/* Lefordított lap háta – EZ EGY HELYŐRZŐ MINTÁZAT, később lecserélhető saját
+   kártyahát-képre (pl. background-image: url('cardback.png')). */
+.card-back {
+  background: repeating-linear-gradient(135deg, var(--card-back-a) 0 8px, var(--card-back-b) 8px 16px);
+  border: 1px solid rgba(255,255,255,0.18);
+  cursor: pointer;
+}
+.deck-count {
+  background: rgba(0,0,0,0.5);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+/* action row */
+.action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.action-row .btn { margin-top: 0; flex: 1; min-width: 120px; }
+
+/* log */
+.game-log {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  max-height: 70px;
+  overflow-y: auto;
+}
+.game-log div { padding: 2px 0; }
+.game-log div:last-child { color: var(--text); font-weight: 500; }
+
+/* ---------------------------------------------------------------------- */
+/* Saját zóna: asztali lapok (le/fel) + kéz                                */
+/* ---------------------------------------------------------------------- */
+.my-table-zones {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  gap: 14px;
+}
+.my-zone-col { flex: 1; min-width: 0; }
+.my-zone-label {
+  font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+.my-zone-label.is-active { color: var(--accent); font-weight: 700; }
+.zone-cards { display: flex; gap: 6px; flex-wrap: wrap; }
+.zone-cards .card { width: 44px; height: 62px; }
+.zone-cards .card .card-pip { font-size: 1.1rem; }
+.zone-cards .card .card-corner { font-size: 0.5rem; }
+
+.hand-wrap {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  padding-top: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+.hand-label-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 8px; font-size: 0.85rem; color: var(--text-dim);
+  padding-top: 12px;
+}
+.hand-label { font-weight: 700; color: var(--text); }
+.hand-label.is-active { color: var(--accent); }
+.hand-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-top: 16px;
+  padding-bottom: 6px;
+  min-height: 88px;
+}
+.hand-container .card { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+
+.hand-container.overlapping {
+  gap: 0;
+  overflow: visible;
+  padding-bottom: 18px;
+  flex-wrap: nowrap;
+}
+.hand-container.overlapping .card + .card {
+  margin-left: calc(var(--card-step) - var(--card-w, 56px));
+}
+.hand-container.overlapping .card:hover {
+  transform: translateY(-5px);
+  z-index: 80 !important;
+}
+
+.card.playable { box-shadow: 0 0 0 3px var(--accent), 0 3px 8px rgba(0,0,0,0.35); cursor: pointer; }
+.card.playable:active { transform: translateY(-6px); }
+.card.disabled { opacity: 0.45; }
+.card.cant-select { opacity: 0.5; filter: saturate(0.4); }
+.card.selected {
+  box-shadow: 0 0 0 3px #fff, 0 4px 14px rgba(0,0,0,0.45);
+  transform: translateY(-12px);
+}
+.hand-container.overlapping .card.selected { z-index: 90 !important; }
+
+.card-back.playable { box-shadow: 0 0 0 3px var(--accent); }
+.card-back.disabled { opacity: 0.45; cursor: default; }
+
+#btn-play-selected { margin-top: 10px; }
+
+/* Frissen húzott lap becsúszása a kezünkbe */
+.card.card-enter { animation: card-enter 0.35s ease; }
+@keyframes card-enter {
+  0% { transform: translateY(36px) scale(0.7); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+#discard-pile.discard-landing { animation: discard-land 0.35s ease; }
+@keyframes discard-land {
+  0% { transform: scale(0.5) rotate(-18deg); opacity: 0.3; }
+  60% { transform: scale(1.1) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* End screen                                                               */
+/* ---------------------------------------------------------------------- */
+.placement-list { list-style: none; padding: 0; margin: 10px 0 18px; }
+.placement-list li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+.placement-list .place-rank { font-family: var(--font-display); font-weight: 700; color: var(--accent); width: 26px; }
+.placement-list li.is-loser { background: rgba(193, 67, 47, 0.18); }
+.placement-list li.me { box-shadow: 0 0 0 2px var(--accent) inset; }
+
+.score-table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 0.9rem; }
+.score-table td, .score-table th { padding: 7px 6px; border-bottom: 1px solid var(--surface-3); text-align: left; }
+.score-table th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; }
+.score-table .me { color: var(--accent); font-weight: 700; }
+
+/* ---------------------------------------------------------------------- */
+/* Modals                                                                   */
+/* ---------------------------------------------------------------------- */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(8, 5, 2, 0.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; z-index: 50;
+}
+.modal-box {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 84vh;
+  overflow-y: auto;
+}
+.modal-box h2 { font-size: 1.2rem; margin-bottom: 14px; }
+
+/* ---- "Gyorstalpaló" szabálytábla – krétatábla a kocsma falán ---- */
+.chalkboard {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.05), transparent 60%),
+    linear-gradient(160deg, #1f2b22 0%, #16201a 100%);
+  border: 10px solid #5a3c26;
+  border-radius: 6px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.35);
+  padding: 18px 16px 20px;
+  position: relative;
+  transform: rotate(-0.4deg);
+}
+.chalkboard::before {
+  content: '🍺';
+  position: absolute;
+  top: -22px; left: 50%;
+  transform: translateX(-50%) rotate(3deg);
+  font-size: 1.4rem;
+}
+.chalkboard h2 {
+  font-family: var(--font-chalk);
+  font-size: 2rem;
+  color: #fdf6e3;
+  text-align: center;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.chalkboard .chalk-sub {
+  font-family: var(--font-chalk);
+  text-align: center;
+  color: #cdd9c9;
+  font-size: 1.1rem;
+  margin-bottom: 14px;
+}
+.chalk-section { margin-bottom: 14px; }
+.chalk-section h3 {
+  font-family: var(--font-chalk);
+  font-size: 1.25rem;
+  color: var(--accent);
+  margin: 0 0 4px;
+}
+.chalk-section p, .chalk-section li {
+  font-family: var(--font-chalk);
+  font-size: 1.08rem;
+  color: #f2f2e9;
+  line-height: 1.3;
+  margin: 0 0 2px;
+}
+.chalk-section ul { margin: 0; padding-left: 20px; }
+.chalk-rule-row {
+  display: flex; justify-content: space-between; gap: 8px;
+  font-family: var(--font-chalk);
+  font-size: 1.05rem;
+  color: #f2f2e9;
+  border-bottom: 1px dashed rgba(255,255,255,0.2);
+  padding: 3px 0;
+}
+.chalk-rule-row .chalk-val { color: var(--accent); white-space: nowrap; }
+.chalk-rule-row.is-off { color: #8a948a; }
+.chalk-rule-row.is-off .chalk-val { color: #8a948a; }
+
+/* ---------------------------------------------------------------------- */
+/* Toast                                                                    */
+/* ---------------------------------------------------------------------- */
+.toast {
+  position: fixed;
+  bottom: 16px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface-3);
+  color: var(--text);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+  z-index: 100;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------------------------------------------------------------------- */
+/* Animációk: repülő lapok / lebegő feliratok                              */
+/* ---------------------------------------------------------------------- */
+.ghost-card {
+  position: fixed;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0.95;
+  background: var(--card-face);
+  transition: transform 0.5s cubic-bezier(.22,.7,.3,1), opacity 0.5s ease;
+}
+.ghost-card-back {
+  background: repeating-linear-gradient(135deg, var(--card-back-a) 0 4px, var(--card-back-b) 4px 8px);
+}
+.float-badge {
+  position: fixed;
+  pointer-events: none;
+  z-index: 200;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0;
+}
+.float-badge.show { animation: float-up 0.9s ease forwards; }
+@keyframes float-up {
+  0%   { opacity: 0; transform: translate(-50%, -100%) scale(0.7); }
+  20%  { opacity: 1; transform: translate(-50%, -130%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -220%) scale(1); }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Reszponzív: tablet / asztali                                            */
+/* ---------------------------------------------------------------------- */
+@media (min-width: 600px) {
+  body { padding: 24px 28px 40px; max-width: 820px; }
+
+  .settings-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .opponents-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    overflow-x: unset;
+  }
+
+  .card { width: 64px; height: 92px; }
+  .card .card-pip { font-size: 1.7rem; }
+  .zone-cards .card { width: 50px; height: 70px; }
+  .hand-container .card { width: 68px; height: 96px; }
+  .hand-container .card .card-pip { font-size: 1.8rem; }
+
+  .hand-container { gap: 10px; }
+  .table-area { padding: 22px 24px; }
+}
+
+@media (min-width: 960px) {
+  body { max-width: 1120px; padding: 28px 40px 40px; }
+
+  .game-wrap {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: auto auto 1fr auto auto auto;
+    grid-template-areas:
+      "topbar  topbar"
+      "sidebar table"
+      "sidebar actions"
+      "sidebar log"
+      "sidebar myzones"
+      "sidebar hand";
+    gap: 12px;
+    align-items: start;
+  }
+  .game-topbar { grid-area: topbar; }
+  .table-area { grid-area: table; }
+  .action-row, #btn-force-skip { grid-area: actions; }
+  .game-log { grid-area: log; }
+  .my-table-zones { grid-area: myzones; }
+  .hand-wrap { grid-area: hand; }
+
+  .opponents-list {
+    grid-area: sidebar;
+    display: flex; flex-direction: column;
+    overflow-x: unset; gap: 8px; align-self: start;
+  }
+  .opponent-chip { width: 100%; min-width: unset; text-align: left; padding: 10px 14px; }
+  .opponent-chip .zone-row { justify-content: flex-start; }
+
+  .hand-container .card { width: 78px; height: 110px; }
+  .hand-container .card .card-pip { font-size: 2rem; }
+
+  .settings-panel { grid-template-columns: 1fr 1fr 1fr; }
+  .card-panel { max-width: 680px; margin: 0 auto; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Dev mód – lebegő gomb és panel (ugyanaz a minta, mint a Colorcardsnál)  */
+/* ---------------------------------------------------------------------- */
+#dev-btn {
+  position: fixed; bottom: 68px; right: 16px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface-2); border: 1px solid var(--surface-3);
+  color: var(--text-dim); font-size: 1rem; cursor: pointer; z-index: 150;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  padding: 0; line-height: 1; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.1s ease;
+}
+#dev-btn:active { transform: scale(0.9); }
+#dev-panel {
+  position: fixed; bottom: 112px; right: 16px;
+  background: var(--surface); border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm); padding: 14px; min-width: 220px; z-index: 149;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.55);
+}
+#dev-panel h3 {
+  font-family: var(--font-display); font-size: 0.82rem; color: var(--text-dim);
+  margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.08em;
+}
+#dev-panel .btn { font-size: 0.85rem; padding: 9px 12px; margin-top: 6px; width: 100%; }
+.dev-bot-status {
+  font-size: 0.78rem; color: var(--text-dim); margin-top: 10px; line-height: 1.45;
+  border-top: 1px solid var(--surface-3); padding-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.active { animation: none; }
+  .card.card-enter { animation: none; }
+  #discard-pile.discard-landing { animation: none; }
+  .float-badge.show { animation: none; }
+}
