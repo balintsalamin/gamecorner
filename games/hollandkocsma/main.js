@@ -29,6 +29,7 @@ let unsubscribe = null;
 let selectedZone = null;     // 'hand' | 'faceUp' | null – melyik zónából válogatunk
 let selectedIndices = [];    // indexek a kiválasztott zónán belül (egyforma értékű lapok)
 let armedSetup = null;       // { zone: 'hand' | 'faceUp', index } – felkészülési csere első fele
+let lastFlashedPickupTs;     // melyik "felvette a paklit" eseményt villantottuk már fel (undefined = még nincs alapérték)
 
 // ----------------------------------------------------------------------
 // Segédfüggvények
@@ -117,6 +118,7 @@ async function dispatch(action) {
 
 function subscribeRoom() {
   if (unsubscribe) unsubscribe();
+  lastFlashedPickupTs = undefined;
   const ref = doc(db, ROOMS_COLLECTION, roomCode);
   unsubscribe = onSnapshot(
     ref,
@@ -465,6 +467,7 @@ function renderOpponents(state) {
   for (const p of order) {
     const chip = document.createElement('div');
     chip.className = 'opponent-chip';
+    chip.dataset.playerId = p.id;
     const idx = players.indexOf(p);
     const finished = state.finishedOrder.includes(p.id);
     if (idx === state.currentPlayerIndex) chip.classList.add('active-turn');
@@ -572,6 +575,16 @@ function diffNewCards(prevHand, nextHand) {
   });
 }
 
+// Rövid piros villanás egy elemen (pl. amikor valaki felveszi a teljes
+// dobott paklit) – az osztály eltávolítása + reflow kényszerítése teszi
+// lehetővé, hogy ismételt eseményeknél is újrainduljon az animáció.
+function flashRed(el) {
+  if (!el) return;
+  el.classList.remove('flash-pickup');
+  void el.offsetWidth;
+  el.classList.add('flash-pickup');
+}
+
 function applyHandOverlap(el, count) {
   if (count <= 1) {
     el.classList.remove('overlapping');
@@ -623,6 +636,7 @@ function renderGame(state) {
     discardEl.className = 'card';
     discardEl.innerHTML = '<span style="font-size:0.65rem;color:var(--text-dim);">üres</span>';
   }
+  document.getElementById('discard-count').textContent = state.discard.length;
 
   document.getElementById('deck-count').textContent = state.deck.length;
 
@@ -711,6 +725,23 @@ function renderGame(state) {
   if (!prefersReducedMotion() && previousState && (previousState.discard || []).length !== state.discard.length) {
     discardEl.classList.remove('discard-landing');
     requestAnimationFrame(() => discardEl.classList.add('discard-landing'));
+  }
+
+  // Valaki felvette a teljes dobott paklit -> rövid piros villanás nála.
+  // (lastFlashedPickupTs követi, melyik eseményt villantottuk már fel, hogy
+  // egy puszta lapkijelölés – ami szintén renderGame()-et hív – ne indítsa
+  // újra ugyanazt az animációt.)
+  if (lastFlashedPickupTs === undefined) {
+    lastFlashedPickupTs = state.lastPickup ? state.lastPickup.ts : null;
+  } else if (state.lastPickup && state.lastPickup.ts !== lastFlashedPickupTs) {
+    lastFlashedPickupTs = state.lastPickup.ts;
+    if (!prefersReducedMotion()) {
+      if (state.lastPickup.playerId === myId) {
+        flashRed(document.getElementById('hand-wrap'));
+      } else {
+        flashRed(document.querySelector(`.opponent-chip[data-player-id="${state.lastPickup.playerId}"]`));
+      }
+    }
   }
 
   const btnPlay = document.getElementById('btn-play-selected');
