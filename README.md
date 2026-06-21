@@ -277,7 +277,11 @@ húzópakliban – így pl. 4 játékosnál, alapbeállítással (4 lap mindenho
   kártyái (neked: a kezed, másoknak: a kártyájuk a játékoslistában) egy
   pillanatra pirosan felvillannak.
 - A dobott lap alatt egy szám mutatja, hány lap van jelenleg a dobott
-  pakliban – ennyit kellene felvenni, ha valaki nem tud lerakni.
+  pakliban – ennyit kellene felvenni, ha valaki nem tud lerakni. Ugyanilyen
+  szám van a húzópakli alatt is, hány lap maradt benne.
+- Egy lapot a "Lerakás" gombbal **és** felfelé húzva (swipe) is le lehet
+  rakni: nem kell pontosan a pakliig húzni, elég egy határozott felfelé
+  mozdulat, így véletlen koppintásra/remegésre nem rakódik le semmi.
 
 ---
 
