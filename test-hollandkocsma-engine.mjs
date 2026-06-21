@@ -31,6 +31,8 @@ function eq(a, b, msg) {
   assert(rankPower('2') === 2, '2 has power 2');
   assert(rankPower('A') === 14, 'A has power 14 (highest)');
   assert(rankPower('K') > rankPower('Q'), 'K beats Q');
+  eq(DEFAULT_SETTINGS.tableCardCount, 4, 'default table card count is 4');
+  eq(DEFAULT_SETTINGS.startingHandSize, 4, 'default starting hand size is 4');
 }
 
 // ----------------------------------------------------------------------
@@ -44,14 +46,35 @@ function eq(a, b, msg) {
   state = applyMove(state, { type: 'startGame' });
   eq(state.status, 'setup', 'status setup after startGame');
   for (const p of state.players) {
-    eq(state.hands[p.id].length, 3, `player ${p.id} has 3 hand cards`);
-    eq(state.faceUp[p.id].length, 3, `player ${p.id} has 3 face-up cards`);
-    eq(state.faceDown[p.id].length, 3, `player ${p.id} has 3 face-down cards`);
+    eq(state.hands[p.id].length, 4, `player ${p.id} has 4 hand cards (new default)`);
+    eq(state.faceUp[p.id].length, 4, `player ${p.id} has 4 face-up cards (new default)`);
+    eq(state.faceDown[p.id].length, 4, `player ${p.id} has 4 face-down cards (new default)`);
   }
   const total = state.deck.length + state.players.reduce(
     (s, p) => s + state.hands[p.id].length + state.faceUp[p.id].length + state.faceDown[p.id].length, 0
   );
-  eq(total, 52, 'total cards = 52 (single deck, 3 players fit)');
+  // 3 players * 12 cards dealt = 36; 1 deck (52) already leaves 16 in the draw
+  // pile, which meets the minDrawPile floor, so a single deck is enough here.
+  eq(total, 52, 'total cards = 52 (one deck is already enough for 3 players at 4/4/4)');
+  eq(state.deck.length, 16, 'draw pile has a healthy cushion (the minDrawPile floor) even with few players');
+  assert(state.deck.length >= 16, 'draw pile never starts below the minDrawPile floor');
+}
+
+// ----------------------------------------------------------------------
+// The exact scenario reported by the user: 4 players, default settings
+// (4 table cards down, 4 up, 4 in hand) -> draw pile must NOT be tiny.
+// ----------------------------------------------------------------------
+{
+  let state = createInitialState();
+  state = applyMove(state, { type: 'join', playerId: 'a', name: 'A' });
+  state = applyMove(state, { type: 'join', playerId: 'b', name: 'B' });
+  state = applyMove(state, { type: 'join', playerId: 'c', name: 'C' });
+  state = applyMove(state, { type: 'join', playerId: 'd', name: 'D' });
+  state = applyMove(state, { type: 'startGame' });
+  // 4 players * 12 cards dealt = 48; a single 52-card deck would leave only 4
+  // (the user's exact complaint), so this must bump to a 2nd deck.
+  eq(state.deck.length, 56, '4 players at default settings: draw pile is comfortably large, not 4 cards');
+  assert(state.deck.length >= 16, '4-player draw pile meets the minDrawPile floor');
 }
 
 // ----------------------------------------------------------------------
@@ -171,6 +194,7 @@ function baseState(overrides = {}) {
 // ----------------------------------------------------------------------
 {
   let state = baseState({
+    deck: ['A-spades', 'K-spades', 'Q-spades'],
     discard: ['9-hearts', '9-clubs'],
     hands: { a: ['10-spades', '4-hearts'], b: ['3-spades'] },
   });
@@ -286,6 +310,8 @@ function baseState(overrides = {}) {
   eq(state2.hands.a, ['3-hearts', '9-hearts', '9-clubs'], 'failed flip: card + whole pile go to hand');
   eq(state2.discard, [], 'discard cleared after failed flip pickup');
   eq(state2.currentPlayerIndex, 1, 'turn passes to b after failed flip');
+  eq(state2.lastPickup.playerId, 'a', 'lastPickup records who picked up (UI red-flash hook)');
+  eq(state2.lastPickup.count, 3, 'lastPickup records how many cards were picked up');
 }
 
 // ----------------------------------------------------------------------
@@ -301,6 +327,9 @@ function baseState(overrides = {}) {
   state = applyMove(state, { type: 'pickupPile', playerId: 'a' });
   eq(state.hands.a, ['3-clubs', '9-hearts'], 'forced pickup merges pile into hand');
   eq(state.currentPlayerIndex, 1, 'turn passes after pickup');
+  eq(state.lastPickup.playerId, 'a', 'lastPickup records who picked up (UI red-flash hook)');
+  eq(state.lastPickup.count, 1, 'lastPickup records how many cards were picked up');
+  assert(typeof state.lastPickup.ts === 'number', 'lastPickup has a timestamp');
 
   // voluntary blocked: has a valid card, voluntaryPickup off
   let state2 = baseState({
@@ -335,6 +364,8 @@ function baseState(overrides = {}) {
   state = applyMove(state, { type: 'blindDraw', playerId: 'a' });
   eq(state.hands.a, ['3-clubs', '4-clubs', '9-hearts'], 'failed blind draw: drawn card + pile go to hand');
   eq(state.currentPlayerIndex, 1, 'turn passes after failed blind draw');
+  eq(state.lastPickup.playerId, 'a', 'lastPickup records who picked up (UI red-flash hook)');
+  eq(state.lastPickup.count, 2, 'lastPickup counts the drawn card + the pile');
 
   let state2 = baseState({
     settings: { blindDrawAttempt: true },
