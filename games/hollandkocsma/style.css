@@ -694,6 +694,15 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   100% { opacity: 0; transform: translate(-50%, -220%) scale(1); }
 }
 
+/* Valaki felvette a teljes dobott paklit – rövid piros villanás rajta/körülötte */
+@keyframes flash-pickup {
+  0%   { box-shadow: 0 0 0 0 rgba(193, 67, 47, 0); background-color: transparent; }
+  18%  { box-shadow: 0 0 0 4px rgba(193, 67, 47, 0.95); background-color: rgba(193, 67, 47, 0.28); }
+  100% { box-shadow: 0 0 0 0 rgba(193, 67, 47, 0); background-color: transparent; }
+}
+.flash-pickup { animation: flash-pickup 0.9s ease; border-radius: var(--radius); }
+.opponent-chip.flash-pickup { animation: flash-pickup 0.9s ease; border-radius: var(--radius-sm); }
+
 /* ---------------------------------------------------------------------- */
 /* Reszponzív: tablet / asztali                                            */
 /* ---------------------------------------------------------------------- */
@@ -791,4 +800,5 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   .card.card-enter { animation: none; }
   #discard-pile.discard-landing { animation: none; }
   .float-badge.show { animation: none; }
+  .flash-pickup { animation: none; }
 }
