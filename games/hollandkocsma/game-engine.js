@@ -31,8 +31,8 @@ export const RANK_DISPLAY = { J: 'Bubi', Q: 'Dáma', K: 'Király', A: 'Ász' };
 // Alapértelmezett szabályok + leírásuk a lobbi UI / gyorstalpaló számára
 // ----------------------------------------------------------------------
 export const DEFAULT_SETTINGS = {
-  tableCardCount: 3,
-  startingHandSize: 3,
+  tableCardCount: 4,
+  startingHandSize: 4,
   twoIsWildReset: true,
   tenBurns: true,
   fiveReverse: false,
@@ -45,11 +45,11 @@ export const DEFAULT_SETTINGS = {
 export const SETTINGS_META = [
   {
     key: 'tableCardCount', label: 'Lapok az asztalon (le / fel)', type: 'number', min: 2, max: 6,
-    hint: 'Ennyi lapot kap mindenki lefordítva, és ugyanennyit rájuk felfordítva (alap: 3).',
+    hint: 'Ennyi lapot kap mindenki lefordítva, és ugyanennyit rájuk felfordítva (alap: 4).',
   },
   {
     key: 'startingHandSize', label: 'Kezdő lapok a kézben', type: 'number', min: 2, max: 7,
-    hint: 'Ennyi lapot kapsz kezdéskor, és a húzópakliból mindig ennyire egészíted ki, amíg az tart (alap: 3).',
+    hint: 'Ennyi lapot kapsz kezdéskor, és a húzópakliból mindig ennyire egészíted ki, amíg az tart (alap: 4).',
   },
   {
     key: 'twoIsWildReset', label: 'Kettes = újraindító', type: 'bool',
@@ -119,10 +119,18 @@ export function shuffle(arr) {
   return a;
 }
 
-// Hány 52 lapos pakli kell, hogy mindenkinek kijöjjön a lapja?
+// Hány 52 lapos pakli kell, hogy mindenkinek kijöjjön a lapja, ÉS utána
+// kényelmes méretű húzópakli maradjon (ne fogyjon ki rögtön az elején)?
+// A korábbi "mindig legalább 2 pakli" szabály csak kis létszámnál segített –
+// 5+ játékosnál vagy nagyobb asztali laplétszámnál ugyanúgy kifogyott volna
+// pár lapra a húzópakli, ezért most addig adunk hozzá paklikat, amíg a
+// kiosztás UTÁN megmaradó húzópakli el nem éri a minimum méretet.
 function decksNeeded(playerCount, settings) {
   const total = playerCount * (settings.tableCardCount * 2 + settings.startingHandSize);
-  return Math.max(1, Math.ceil(total / 52));
+  const minDrawPile = Math.max(16, playerCount * 4);
+  let decks = Math.max(1, Math.ceil(total / 52));
+  while (decks * 52 - total < minDrawPile) decks++;
+  return decks;
 }
 
 // Lerakható-e most a `rank` érték? (Az aktuális dobott pakli / újraindítás /
@@ -277,6 +285,7 @@ function dealNewRound(state) {
   state.finishedOrder = [];
   state.winnerId = null;
   state.loserId = null;
+  state.lastPickup = null;
   state.status = 'setup';
   state.currentPlayerIndex = (state.dealerIndex || 0) % n;
   state.log = pushLog(state.log, 'Új kör – mindenki rendezheti a lapjait, mielőtt kezdünk.');
@@ -306,6 +315,9 @@ export function createInitialState(settingsOverrides) {
     finishedOrder: [],
     winnerId: null,
     loserId: null,
+    // Az utolsó "valaki felvette a paklit" esemény – a UI ezt figyeli, hogy
+    // egy pillanatra pirosan felvillantsa az érintett játékos kártyáit.
+    lastPickup: null,
     log: [],
   };
 }
@@ -487,6 +499,7 @@ export function applyMove(stateIn, action) {
         state.discard = [];
         state.resetActive = false;
         state.reverseCap = null;
+        state.lastPickup = { playerId: action.playerId, count: pickedUpCount, ts: Date.now() };
         state.log = pushLog(state.log, `Nem volt jó – ${nameOf(players, action.playerId)} felvette a paklit (${pickedUpCount} lap).`);
         state.currentPlayerIndex = nextActiveIndex(state, playerIndex);
       }
@@ -524,6 +537,7 @@ export function applyMove(stateIn, action) {
         state.discard = [];
         state.resetActive = false;
         state.reverseCap = null;
+        state.lastPickup = { playerId: action.playerId, count: pickedUpCount, ts: Date.now() };
         state.log = pushLog(
           state.log,
           `${nameOf(players, action.playerId)} vakon húzott (${rankDisplay(rank)}) – nem jött be, felvette a paklit (${pickedUpCount} lap).`
@@ -550,6 +564,7 @@ export function applyMove(stateIn, action) {
       state.discard = [];
       state.resetActive = false;
       state.reverseCap = null;
+      state.lastPickup = { playerId: action.playerId, count: pickedUpCount, ts: Date.now() };
       state.log = pushLog(state.log, `${nameOf(players, action.playerId)} felvette a dobott paklit (${pickedUpCount} lap).`);
       state.currentPlayerIndex = nextActiveIndex(state, playerIndex);
       return state;
@@ -588,6 +603,7 @@ export function applyMove(stateIn, action) {
       state.finishedOrder = [];
       state.winnerId = null;
       state.loserId = null;
+      state.lastPickup = null;
       state.currentPlayerIndex = 0;
       state.log = [];
       return state;
