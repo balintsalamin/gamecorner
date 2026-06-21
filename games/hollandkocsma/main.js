@@ -502,6 +502,11 @@ function clearSelectionIfStale(state) {
   return zoneInfo;
 }
 
+// Mennyit kell mozdulni ahhoz, hogy koppintás helyett húzásnak számítson,
+// illetve hogy a húzás végén tényleg lerakja a lapot.
+const SWIPE_TAP_THRESHOLD = 8;
+const SWIPE_PLAY_THRESHOLD = 78;
+
 function buildZoneCardEl(card, index, zoneName, isActiveZone, cardsArr, small) {
   const el = document.createElement('div');
   el.className = cardClass(card);
@@ -521,8 +526,108 @@ function buildZoneCardEl(card, index, zoneName, isActiveZone, cardsArr, small) {
     el.classList.add(validHere ? 'playable' : 'disabled');
   }
 
-  el.addEventListener('click', () => onZoneCardClick(zoneName, index, cardsArr));
+  attachSwipeToPlay(el, {
+    enabled: isActiveZone,
+    valid: validHere,
+    onTap: () => onZoneCardClick(zoneName, index, cardsArr),
+    onPlay: () => playSingleCard(zoneName, index),
+    onRejected: () => showToast('Ez a lap most nem rakható le.'),
+  });
   return el;
+}
+
+// Koppintás = a meglévő kijelölős logika (onTap). Felfelé húzás, kellő
+// távolságra = azonnali, önálló lerakás (onPlay), a gombos több-lapos
+// kijelöléstől függetlenül. Kis mozdulatok (remegés, véletlen érintés)
+// nem váltanak ki sem kijelölést, sem lerakást.
+function attachSwipeToPlay(el, { enabled, valid, onTap, onPlay, onRejected }) {
+  if (!enabled) return;
+  let pointerId = null;
+  let startX = 0, startY = 0;
+  let dx = 0, dy = 0;
+  let dragging = false;
+  let captured = false;
+
+  function snapBack() {
+    el.classList.remove('dragging');
+    el.style.transition = 'transform 0.25s cubic-bezier(.22,.7,.3,1)';
+    el.style.transform = '';
+    el.style.opacity = '';
+    setTimeout(() => { el.style.transition = ''; }, 260);
+  }
+
+  el.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    dx = 0; dy = 0;
+    dragging = false;
+    captured = false;
+  });
+
+  el.addEventListener('pointermove', (e) => {
+    if (pointerId === null || e.pointerId !== pointerId) return;
+    dx = e.clientX - startX;
+    dy = e.clientY - startY;
+
+    if (!dragging) {
+      if (Math.hypot(dx, dy) < SWIPE_TAP_THRESHOLD) return;
+      // Csak akkor "vegyük át" a gesztust kártyahúzásként, ha inkább
+      // függőleges, mint vízszintes – a vízszintes maradjon a kéz natív
+      // görgetéséé (touch-action: pan-x a CSS-ben).
+      if (Math.abs(dy) <= Math.abs(dx)) return;
+      dragging = true;
+      el.classList.add('dragging');
+      try { el.setPointerCapture(pointerId); captured = true; } catch (err) { /* mindegy */ }
+    }
+
+    e.preventDefault();
+    const rotate = Math.max(-18, Math.min(18, dx * 0.12));
+    el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
+  });
+
+  function finish(e) {
+    if (pointerId === null || e.pointerId !== pointerId) return;
+    if (captured) { try { el.releasePointerCapture(pointerId); } catch (err) { /* mindegy */ } }
+    const wasDragging = dragging;
+    const upDistance = -dy;
+    pointerId = null;
+    dragging = false;
+    captured = false;
+
+    if (!wasDragging) {
+      onTap();
+      return;
+    }
+
+    if (upDistance >= SWIPE_PLAY_THRESHOLD) {
+      if (valid) {
+        el.classList.remove('dragging');
+        el.style.transition = 'transform 0.22s ease, opacity 0.22s ease';
+        el.style.transform = `translate(${dx}px, ${dy - 140}px) rotate(${Math.max(-18, Math.min(18, dx * 0.12))}deg)`;
+        el.style.opacity = '0';
+        onPlay();
+      } else {
+        onRejected();
+        snapBack();
+      }
+    } else {
+      snapBack();
+    }
+  }
+
+  el.addEventListener('pointerup', finish);
+  el.addEventListener('pointercancel', finish);
+}
+
+// Önálló, egyetlen lap lerakása húzással (a kijelölős több-lapos logikától
+// függetlenül – ha közben volt aktív kijelölés, azt töröljük).
+async function playSingleCard(zoneName, index) {
+  selectedZone = null;
+  selectedIndices = [];
+  try { await dispatch({ type: 'playCards', playerId: myId, zone: zoneName, indices: [index] }); }
+  catch (e) { showToast(e.message); renderGame(latestState); }
 }
 
 function onZoneCardClick(zoneName, index, cardsArr) {
