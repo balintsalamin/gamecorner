@@ -491,6 +491,12 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
 }
 .hand-container .card { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
 
+/* touch-action: pan-x -> a kéz vízszintes görgetése natív marad (touch),
+   a függőleges húzást viszont a JS kezeli (lapok felhúzása lerakáshoz). */
+.hand-container .card, .zone-cards .card {
+  touch-action: pan-x;
+}
+
 .hand-container.overlapping {
   gap: 0;
   overflow: visible;
@@ -514,6 +520,16 @@ h1, h2 { font-family: var(--font-display); margin: 0; }
   transform: translateY(-12px);
 }
 .hand-container.overlapping .card.selected { z-index: 90 !important; }
+
+/* Aktívan húzott lap – húzás közben kövesse 1:1 az ujjat/egeret, ezért
+   transition nélkül, magasabb z-index-szel és erősebb árnyékkal emelkedik
+   ki a többi lap közül. */
+.card.dragging {
+  z-index: 95 !important;
+  cursor: grabbing;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.55);
+  transition: none !important;
+}
 
 .card-back.playable { box-shadow: 0 0 0 3px var(--accent); }
 .card-back.disabled { opacity: 0.45; cursor: default; }
