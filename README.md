@@ -247,8 +247,8 @@ el nem indul, és játék közben bármikor megnyitható egy "Gyorstalpaló"
 
 | Szabály | Leírás |
 |---|---|
-| **Lapok az asztalon (le / fel)** | Hány lapot kap mindenki lefordítva, és ugyanennyit rájuk felfordítva (alap: 3). |
-| **Kezdő lapok a kézben** | Hány lapot kap mindenki kezdéskor, és a húzópakliból mindig ennyire egészíti ki, amíg az tart (alap: 3). |
+| **Lapok az asztalon (le / fel)** | Hány lapot kap mindenki lefordítva, és ugyanennyit rájuk felfordítva (alap: 4). |
+| **Kezdő lapok a kézben** | Hány lapot kap mindenki kezdéskor, és a húzópakliból mindig ennyire egészíti ki, amíg az tart (alap: 4). |
 | **Kettes = újraindító** | A 2-es bármilyen lapra lerakható, és utána bármilyen lap jöhet. |
 | **Tízes = égető lap** | A 10-es bármilyen lapra lerakható; elégeti (kiveszi a játékból) a teljes dobott paklit, és újra ugyanaz a játékos jön. |
 | **Ötös = visszafordító** | Az 5-ös bármilyen lapra lerakható; utána a következő lapnak legfeljebb ötösnek kell lennie (eredetileg opcionális szabály, alapból ki van kapcsolva). |
@@ -265,6 +265,19 @@ el nem indul, és játék közben bármikor megnyitható egy "Gyorstalpaló"
 - Aki elsőként kiürül, megússza a kört; aki utoljára marad lapokkal, ő
   veszít. A lobbiban "Következő kör" gombbal újra lehet osztani – a
   vesztések kör-számonként összeadódnak, amíg vissza nem léptek a lobbiba.
+
+### Húzópakli mérete
+A kiosztáshoz szükséges 52 lapos paklikból annyi kerül összekeverve, hogy a
+kiosztás UTÁN is maradjon legalább ~16 lap (illetve játékosonként 4) a
+húzópakliban – így pl. 4 játékosnál, alapbeállítással (4 lap mindenhol) már
+2 pakli (104 lap) kerül összekeverésre, nem csak 1.
+
+### Vizuális visszajelzések
+- Ha valaki felveszi a teljes dobott paklit (kötelezően vagy blöffből), a
+  kártyái (neked: a kezed, másoknak: a kártyájuk a játékoslistában) egy
+  pillanatra pirosan felvillannak.
+- A dobott lap alatt egy szám mutatja, hány lap van jelenleg a dobott
+  pakliban – ennyit kellene felvenni, ha valaki nem tud lerakni.
 
 ---
 
