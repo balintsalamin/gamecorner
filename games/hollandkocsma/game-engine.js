@@ -31,6 +31,7 @@ export const RANK_DISPLAY = { J: 'Bubi', Q: 'Dáma', K: 'Király', A: 'Ász' };
 // Alapértelmezett szabályok + leírásuk a lobbi UI / gyorstalpaló számára
 // ----------------------------------------------------------------------
 export const DEFAULT_SETTINGS = {
+  deckCount: 0,
   tableCardCount: 4,
   startingHandSize: 4,
   twoIsWildReset: true,
@@ -43,6 +44,10 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const SETTINGS_META = [
+  {
+    key: 'deckCount', label: 'Paklik száma', type: 'number', min: 0, max: 6,
+    hint: '0 = automatikus (a program számolja ki a játékosok és a lapszám alapján). 1–6 = kézzel megadott paklidb.',
+  },
   {
     key: 'tableCardCount', label: 'Lapok az asztalon (le / fel)', type: 'number', min: 2, max: 6,
     hint: 'Ennyi lapot kap mindenki lefordítva, és ugyanennyit rájuk felfordítva (alap: 4).',
@@ -260,7 +265,7 @@ function finishPlayer(state, playerId) {
 function dealNewRound(state) {
   const settings = state.settings;
   const n = state.players.length;
-  const count = decksNeeded(n, settings);
+  const count = (settings.deckCount > 0) ? settings.deckCount : decksNeeded(n, settings);
   let deck = [];
   for (let i = 0; i < count; i++) deck = deck.concat(createDeck());
   deck = shuffle(deck);
@@ -318,6 +323,10 @@ export function createInitialState(settingsOverrides) {
     // Az utolsó "valaki felvette a paklit" esemény – a UI ezt figyeli, hogy
     // egy pillanatra pirosan felvillantsa az érintett játékos kártyáit.
     lastPickup: null,
+    // Dev üzenetküldő – csak akkor aktív, ha a szoba létrehozója bekapcsolta
+    // a dev menüből. Mindig csak erre a lobbira vonatkozik.
+    messagingEnabled: false,
+    lastMessage: null,
     log: [],
   };
 }
@@ -585,6 +594,31 @@ export function applyMove(stateIn, action) {
       return state;
     }
 
+    case 'toggleMessaging': {
+      const state = structuredClone(stateIn);
+      state.messagingEnabled = !state.messagingEnabled;
+      return state;
+    }
+
+    case 'sendMessage': {
+      if (!stateIn.messagingEnabled) throw new Error('Az üzenetküldés ki van kapcsolva ennél a szobánál.');
+      const sender = stateIn.players.find((p) => p.id === action.fromId);
+      if (!sender) throw new Error('Ismeretlen küldő.');
+      const target = stateIn.players.find((p) => p.id === action.toId);
+      if (!target) throw new Error('Ismeretlen címzett.');
+      const text = String(action.text || '').trim().slice(0, 120);
+      if (!text) throw new Error('Az üzenet nem lehet üres.');
+      const state = structuredClone(stateIn);
+      state.lastMessage = {
+        fromId: action.fromId,
+        fromName: sender.name,
+        toId: action.toId,
+        text,
+        ts: Date.now(),
+      };
+      return state;
+    }
+
     case 'returnToLobby': {
       const state = structuredClone(stateIn);
       state.status = 'lobby';
@@ -604,6 +638,7 @@ export function applyMove(stateIn, action) {
       state.winnerId = null;
       state.loserId = null;
       state.lastPickup = null;
+      state.lastMessage = null;
       state.currentPlayerIndex = 0;
       state.log = [];
       return state;
