@@ -113,7 +113,10 @@
       <div class="game-topbar">
         <div class="room-pill">Szoba: <strong id="game-room-code"></strong></div>
         <div class="round-pill" id="round-pill"></div>
-        <button id="btn-show-rules-game" class="btn btn-small btn-rules">📋 Szabályok</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button id="btn-msg-compose" class="btn btn-small hidden" title="Üzenet küldése">💬</button>
+          <button id="btn-show-rules-game" class="btn btn-small btn-rules">📋 Szabályok</button>
+        </div>
       </div>
 
       <div id="opponents-list" class="opponents-list"></div>
@@ -216,6 +219,30 @@
         </div>
       </div>
       <button id="btn-close-rules" class="btn btn-secondary">Bezárás</button>
+    </div>
+  </div>
+
+  <!-- Dev üzenetküldő compose modal -->
+  <div id="modal-msg-compose" class="modal hidden">
+    <div class="modal-box">
+      <h2>💬 Üzenet küldése</h2>
+      <label class="field">
+        <span>Üzenet</span>
+        <input id="msg-text-input" type="text" maxlength="120" placeholder="Írd ide az üzeneted..." autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Kinek?</span>
+        <select id="msg-target-select" style="width:100%;padding:10px;background:var(--surface-2);color:var(--text);border:1px solid var(--surface-3);border-radius:var(--radius-sm);font-size:1rem;"></select>
+      </label>
+      <button id="msg-send-btn" class="btn btn-primary">Küldés</button>
+      <button id="msg-cancel-btn" class="btn btn-text">Mégsem</button>
+    </div>
+  </div>
+
+  <!-- Speech bubble – a célzott játékosnál jelenik meg, 5mp után eltűnik -->
+  <div id="speech-bubble" class="speech-bubble hidden">
+    <div class="speech-bubble-inner">
+      <span id="speech-bubble-text"></span>
     </div>
   </div>
 
