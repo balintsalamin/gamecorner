@@ -30,6 +30,7 @@ let selectedZone = null;     // 'hand' | 'faceUp' | null – melyik zónából v
 let selectedIndices = [];    // indexek a kiválasztott zónán belül (egyforma értékű lapok)
 let armedSetup = null;       // { zone: 'hand' | 'faceUp', index } – felkészülési csere első fele
 let lastFlashedPickupTs;     // melyik "felvette a paklit" eseményt villantottuk már fel (undefined = még nincs alapérték)
+let lastShownMessageTs;      // melyik üzenetet mutattuk már meg (undefined = inicializálatlan)
 
 // ----------------------------------------------------------------------
 // Segédfüggvények
@@ -119,6 +120,7 @@ async function dispatch(action) {
 function subscribeRoom() {
   if (unsubscribe) unsubscribe();
   lastFlashedPickupTs = undefined;
+  lastShownMessageTs = undefined;
   const ref = doc(db, ROOMS_COLLECTION, roomCode);
   unsubscribe = onSnapshot(
     ref,
@@ -690,6 +692,48 @@ function flashRed(el) {
   el.classList.add('flash-pickup');
 }
 
+// Dev üzenet speech bubble – 5 másodperc után eltűnik magától, nem zárható be
+let bubbleTimer = null;
+function showSpeechBubble(fromName, text) {
+  const el = document.getElementById('speech-bubble');
+  const textEl = document.getElementById('speech-bubble-text');
+  textEl.textContent = `${fromName} azt üzeni: ${text}`;
+  el.classList.remove('hidden');
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+// Compose modal
+document.getElementById('btn-msg-compose').addEventListener('click', () => {
+  if (!latestState) return;
+  const others = latestState.players.filter((p) => p.id !== myId);
+  if (others.length === 0) { showToast('Nincs más játékos a szobában.'); return; }
+  const sel = document.getElementById('msg-target-select');
+  sel.innerHTML = '';
+  for (const p of others) {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  }
+  document.getElementById('msg-text-input').value = '';
+  openModal('modal-msg-compose');
+});
+
+document.getElementById('msg-cancel-btn').addEventListener('click', () => closeModal('modal-msg-compose'));
+
+document.getElementById('msg-send-btn').addEventListener('click', async () => {
+  const text = document.getElementById('msg-text-input').value.trim();
+  const toId = document.getElementById('msg-target-select').value;
+  if (!text) { showToast('Írd be az üzenetet!'); return; }
+  closeModal('modal-msg-compose');
+  try {
+    await dispatch({ type: 'sendMessage', fromId: myId, toId, text });
+  } catch (e) {
+    showToast(e.message);
+  }
+});
+
 function applyHandOverlap(el, count) {
   if (count <= 1) {
     el.classList.remove('overlapping');
@@ -776,6 +820,9 @@ function renderGame(state) {
   const btnForceSkip = document.getElementById('btn-force-skip');
   btnForceSkip.classList.toggle('hidden', !(current && !current.connected));
 
+  // Üzenetküldés gomb – csak akkor látható, ha a dev menüből be van kapcsolva
+  document.getElementById('btn-msg-compose').classList.toggle('hidden', !state.messagingEnabled);
+
   const logEl = document.getElementById('game-log');
   logEl.innerHTML = '';
   for (const entry of state.log.slice(-6)) {
@@ -847,6 +894,14 @@ function renderGame(state) {
         flashRed(document.querySelector(`.opponent-chip[data-player-id="${state.lastPickup.playerId}"]`));
       }
     }
+  }
+
+  // Speech bubble – ha valaki üzenetet küldött NEKEM
+  if (state.messagingEnabled && state.lastMessage &&
+      state.lastMessage.toId === myId &&
+      state.lastMessage.ts !== lastShownMessageTs) {
+    lastShownMessageTs = state.lastMessage.ts;
+    showSpeechBubble(state.lastMessage.fromName, state.lastMessage.text);
   }
 
   const btnPlay = document.getElementById('btn-play-selected');
@@ -1044,6 +1099,11 @@ function updateDevPanel() {
   statusEl.textContent = activeBots.size === 0
     ? 'Nincs aktív bot.'
     : `Aktív (${activeBots.size}): ${[...activeBots.values()].join(', ')}`;
+
+  const msgStateEl = document.getElementById('dev-msg-state');
+  if (msgStateEl && latestState) {
+    msgStateEl.textContent = latestState.messagingEnabled ? 'Be ✅' : 'Ki';
+  }
 }
 
 function initDevMode() {
@@ -1061,15 +1121,25 @@ function initDevMode() {
   devPanel.classList.add('hidden');
   devPanel.innerHTML = `
     <h3>🛠️ Dev mód</h3>
+    <button id="dev-toggle-msg" class="btn btn-secondary">💬 Üzenetküldés: <span id="dev-msg-state">Ki</span></button>
     <button id="dev-add-bot" class="btn btn-secondary">🤖 Buta bot hozzáadása</button>
     <button id="dev-clear-bots" class="btn btn-text">🗑️ Összes bot eltávolítása</button>
     <div id="dev-bot-status" class="dev-bot-status">Nincs aktív bot.</div>
   `;
   document.body.appendChild(devPanel);
 
-  devBtn.addEventListener('click', (e) => { e.stopPropagation(); devPanel.classList.toggle('hidden'); });
+  devBtn.addEventListener('click', (e) => { e.stopPropagation(); updateDevPanel(); devPanel.classList.toggle('hidden'); });
   document.addEventListener('click', () => devPanel.classList.add('hidden'));
   devPanel.addEventListener('click', (e) => e.stopPropagation());
+
+  document.getElementById('dev-toggle-msg').addEventListener('click', async () => {
+    if (!roomCode) { showToast('Előbb csatlakozz egy szobához!'); return; }
+    try {
+      await dispatch({ type: 'toggleMessaging' });
+    } catch (e) {
+      showToast(e.message);
+    }
+  });
 
   document.getElementById('dev-add-bot').addEventListener('click', async () => {
     if (!roomCode) { showToast('Előbb csatlakozz egy szobához!'); return; }
