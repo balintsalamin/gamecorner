@@ -436,7 +436,74 @@ function baseState(overrides = {}) {
   eq(state.status, 'lobby', 'returnToLobby resets to lobby');
   eq(state.hands, {}, 'hands cleared');
   eq(state.players.every((p) => p.lossCount === 0), true, 'lossCount reset');
+  eq(state.lastMessage, null, 'lastMessage cleared on returnToLobby');
 }
+
+// ----------------------------------------------------------------------
+// deckCount setting overrides auto-calculation
+// ----------------------------------------------------------------------
+{
+  let state = createInitialState({ deckCount: 1 });
+  state = applyMove(state, { type: 'join', playerId: 'a', name: 'A' });
+  state = applyMove(state, { type: 'join', playerId: 'b', name: 'B' });
+  state = applyMove(state, { type: 'join', playerId: 'c', name: 'C' });
+  state = applyMove(state, { type: 'join', playerId: 'd', name: 'D' });
+  state = applyMove(state, { type: 'startGame' });
+  const total = state.deck.length + state.players.reduce(
+    (s, p) => s + state.hands[p.id].length + state.faceUp[p.id].length + state.faceDown[p.id].length, 0
+  );
+  eq(total, 52, 'deckCount:1 forces exactly 1 deck (52 cards) regardless of auto-calculation');
+
+  let state2 = createInitialState({ deckCount: 3 });
+  state2 = applyMove(state2, { type: 'join', playerId: 'a', name: 'A' });
+  state2 = applyMove(state2, { type: 'join', playerId: 'b', name: 'B' });
+  state2 = applyMove(state2, { type: 'startGame' });
+  const total2 = state2.deck.length + state2.players.reduce(
+    (s, p) => s + state2.hands[p.id].length + state2.faceUp[p.id].length + state2.faceDown[p.id].length, 0
+  );
+  eq(total2, 156, 'deckCount:3 forces exactly 3 decks (156 cards)');
+}
+
+// ----------------------------------------------------------------------
+// toggleMessaging and sendMessage
+// ----------------------------------------------------------------------
+{
+  let state = createInitialState();
+  state = applyMove(state, { type: 'join', playerId: 'a', name: 'Anna' });
+  state = applyMove(state, { type: 'join', playerId: 'b', name: 'Bence' });
+  eq(state.messagingEnabled, false, 'messaging off by default');
+
+  // sendMessage throws when messaging is off
+  let threw = false;
+  try { applyMove(state, { type: 'sendMessage', fromId: 'a', toId: 'b', text: 'Helló!' }); }
+  catch (e) { threw = true; }
+  assert(threw, 'sendMessage throws when messagingEnabled is false');
+
+  state = applyMove(state, { type: 'toggleMessaging' });
+  eq(state.messagingEnabled, true, 'toggleMessaging turns messaging on');
+
+  state = applyMove(state, { type: 'toggleMessaging' });
+  eq(state.messagingEnabled, false, 'toggleMessaging turns messaging off again');
+
+  state = applyMove(state, { type: 'toggleMessaging' });
+  state = applyMove(state, { type: 'sendMessage', fromId: 'a', toId: 'b', text: 'Helló Bence!' });
+  eq(state.lastMessage.fromName, 'Anna', 'lastMessage.fromName correct');
+  eq(state.lastMessage.toId, 'b', 'lastMessage.toId correct');
+  eq(state.lastMessage.text, 'Helló Bence!', 'lastMessage.text correct');
+  assert(typeof state.lastMessage.ts === 'number', 'lastMessage.ts is a number');
+
+  // empty message throws
+  let threw2 = false;
+  try { applyMove(state, { type: 'sendMessage', fromId: 'a', toId: 'b', text: '   ' }); }
+  catch (e) { threw2 = true; }
+  assert(threw2, 'sendMessage throws on empty text');
+
+  // message is truncated to 120 chars
+  const longMsg = 'x'.repeat(200);
+  state = applyMove(state, { type: 'sendMessage', fromId: 'a', toId: 'b', text: longMsg });
+  eq(state.lastMessage.text.length, 120, 'message truncated to 120 chars');
+}
+
 
 // ----------------------------------------------------------------------
 // forceSkip
