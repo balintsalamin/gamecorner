@@ -1,0 +1,324 @@
+/* ============================================================
+   Pew! – Stíluslap
+   Téma: sötét, neon-cyber (nem western) – mobilra optimalizált
+   ============================================================ */
+
+/* ─── Design tokenek ────────────────────────────────────────── */
+:root {
+  --bg:        #090b15;
+  --surface:   #111427;
+  --surface2:  #1a1e38;
+  --surface3:  #232847;
+  --border:    #2a2f52;
+  --accent:    #00d9ff;
+  --accent2:   #7c5cfc;
+  --danger:    #ff3870;
+  --safe:      #29e67a;
+  --warn:      #ffb627;
+  --text:      #dde2f5;
+  --text-mute: #7880a8;
+  --text-dim:  #4a5070;
+  --shadow:    rgba(0,0,0,.55);
+
+  /* kártya típus-színek */
+  --c-action:   #1e2d4f;
+  --c-react:    #1e3329;
+  --c-equip:    #1f2e40;
+  --c-weapon:   #2a1e44;
+  --c-bomb:     #3a1a1a;
+  --c-jail:     #252025;
+
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { min-height: 100dvh; overflow-x: hidden; }
+input, button { font-family: inherit; font-size: inherit; }
+
+/* ─── Képernyők ──────────────────────────────────────────────── */
+.screen { display: none; min-height: 100dvh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ─── HOME ───────────────────────────────────────────────────── */
+#screen-home { align-items: center; justify-content: center; padding: 1.5rem; }
+.home-inner  { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 1.8rem; }
+.home-logo   { text-align: center; }
+.logo-pew    { font-family: 'Fredoka', sans-serif; font-size: 3.8rem; font-weight: 700;
+               background: linear-gradient(135deg, var(--accent), var(--accent2));
+               -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+               background-clip: text; line-height: 1; display: block; }
+.logo-sub    { color: var(--text-mute); font-size: .85rem; margin-top: .3rem; }
+
+.form-card   { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+               padding: 1.6rem; display: flex; flex-direction: column; }
+.field-label { font-size: .78rem; font-weight: 600; color: var(--text-mute); text-transform: uppercase;
+               letter-spacing: .07em; margin-bottom: .4rem; }
+input[type="text"] {
+  background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px;
+  padding: .75rem 1rem; color: var(--text); width: 100%;
+  outline: none; transition: border-color .2s;
+}
+input[type="text"]:focus { border-color: var(--accent); }
+.back-link   { text-align: center; color: var(--text-mute); font-size: .85rem;
+               text-decoration: none; padding: .6rem; }
+.back-link:hover { color: var(--accent); }
+
+/* ─── LOBBY ──────────────────────────────────────────────────── */
+#screen-lobby { padding: 1.4rem; }
+.lobby-inner  { max-width: 440px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1rem; }
+.room-banner  { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+               padding: 1rem 1.4rem; display: flex; align-items: center; justify-content: space-between; }
+.room-label   { font-size: .8rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: .07em; }
+.room-code    { font-family: 'Fredoka', sans-serif; font-size: 2rem; font-weight: 700; color: var(--accent);
+               letter-spacing: .15em; }
+.lobby-players { display: flex; flex-direction: column; gap: .5rem; }
+.lobby-player  { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+                padding: .8rem 1rem; display: flex; align-items: center; gap: .8rem; }
+.lobby-player.me { border-color: var(--safe); }
+.lp-avatar     { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2);
+                display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+.lobby-info    { color: var(--text-mute); font-size: .85rem; text-align: center; }
+
+/* ─── KARAKTERVÁLASZTÁS ──────────────────────────────────────── */
+#screen-charselect  { padding: 1.2rem; }
+.charselect-inner   { max-width: 460px; margin: 0 auto; width: 100%; }
+.screen-title       { font-family: 'Fredoka', sans-serif; font-size: 1.8rem; font-weight: 700;
+                     color: var(--accent); text-align: center; margin-bottom: 1rem; }
+.role-reveal        { background: var(--surface); border-radius: 12px; border: 1.5px solid var(--border);
+                     padding: 1rem 1.4rem; text-align: center; margin-bottom: 1.2rem; }
+.role-reveal .role-name { font-family: 'Fredoka', sans-serif; font-size: 1.5rem; font-weight: 700; }
+.role-reveal .role-goal { font-size: .82rem; color: var(--text-mute); margin-top: .3rem; }
+
+.char-options       { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+.char-card          { background: var(--surface2); border: 2px solid var(--border); border-radius: 14px;
+                     padding: 1.1rem; cursor: pointer; transition: border-color .2s, transform .1s;
+                     display: flex; flex-direction: column; gap: .5rem; }
+.char-card:active   { transform: scale(.97); }
+.char-card.selected { border-color: var(--accent); background: #131838; }
+.char-card-name     { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.05rem; }
+.char-card-hp       { font-size: .82rem; color: var(--text-mute); }
+.char-card-ability  { font-size: .78rem; color: var(--text-mute); line-height: 1.4; }
+.waiting-msg        { text-align: center; color: var(--text-mute); padding: 1rem;
+                     animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ─── JÁTÉKKÉPERNYŐ ──────────────────────────────────────────── */
+#screen-game  { padding: 0; overflow: hidden; max-height: 100dvh; display: flex !important; flex-direction: column; }
+
+/* Körváltás-sáv (teteje) */
+.turn-banner  { padding: .6rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border);
+               display: flex; align-items: center; justify-content: space-between;
+               flex-shrink: 0; min-height: 42px; }
+.turn-banner.my-turn { background: #0d2215; border-color: var(--safe); }
+.turn-name    { font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; }
+.turn-name.my { color: var(--safe); }
+.turn-phase   { font-size: .75rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: .06em; }
+
+/* Játékosok listája */
+.player-list  { display: flex; flex-direction: column; gap: 3px; padding: .4rem .6rem;
+               overflow-y: auto; max-height: 38vh; flex-shrink: 0; }
+.player-row   { display: grid; grid-template-columns: 1fr auto auto; align-items: center;
+               gap: .5rem; background: var(--surface); border: 1.5px solid var(--border);
+               border-radius: 9px; padding: .45rem .7rem; transition: border-color .2s; }
+.player-row.is-me      { border-color: var(--safe); background: #0d1f16; }
+.player-row.is-current { border-color: var(--accent); background: #0b1a28; }
+.player-row.dead       { opacity: .35; }
+.pr-left   { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.pr-name   { font-weight: 600; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr-char   { font-size: .72rem; color: var(--text-mute); }
+.pr-role   { font-size: .72rem; }
+.pr-hp     { font-size: .78rem; white-space: nowrap; }
+.pr-table  { display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+.pr-table-card { font-size: .85rem; }
+.pr-you-tag { font-size: .6rem; background: var(--safe); color: #000; border-radius: 4px;
+             padding: 1px 4px; font-weight: 700; flex-shrink: 0; }
+.current-indicator { font-size: .7rem; color: var(--accent); flex-shrink: 0; }
+
+/* Játéktábla */
+.game-board   { padding: .4rem .6rem; flex-shrink: 0; }
+.piles-row    { display: flex; gap: .6rem; margin-bottom: .4rem; }
+.pile-box     { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+               padding: .5rem .8rem; text-align: center; flex: 1; }
+.pile-icon    { font-size: 1.5rem; }
+.pile-top     { font-size: .78rem; color: var(--accent); font-weight: 600; line-height: 1.2; }
+.pile-count   { font-family: 'Fredoka', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--text); }
+.pile-label   { font-size: .7rem; color: var(--text-mute); margin-top: 2px; }
+.game-log     { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+               padding: .5rem .7rem; font-size: .75rem; color: var(--text-mute);
+               max-height: 80px; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 2px; }
+.log-entry    { line-height: 1.35; }
+
+/* Saját kéz */
+.my-area      { flex: 1; display: flex; flex-direction: column; background: var(--surface);
+               border-top: 1px solid var(--border); padding: .5rem .6rem .6rem; overflow: hidden; }
+.my-area-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .4rem; }
+.my-char-label  { font-family: 'Fredoka', sans-serif; font-size: .95rem; font-weight: 600; color: var(--accent2); }
+.my-hp-display  { font-size: .85rem; }
+.my-hand      { display: flex; gap: .4rem; overflow-x: auto; padding-bottom: .3rem;
+               scrollbar-width: thin; scrollbar-color: var(--border) transparent; flex-shrink: 0; }
+.my-hand::-webkit-scrollbar { height: 4px; }
+.my-hand::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Kártyák */
+.card         { flex-shrink: 0; width: 80px; border-radius: 10px; border: 2px solid transparent;
+               padding: .45rem .4rem; cursor: pointer; transition: border-color .15s, transform .1s;
+               display: flex; flex-direction: column; gap: .18rem; user-select: none; }
+.card:active  { transform: scale(.93); }
+.card.playable { border-color: var(--accent); }
+.card.selected { border-color: var(--warn); transform: translateY(-4px); }
+.card.unplayable { opacity: .45; cursor: not-allowed; }
+.card-emoji   { font-size: 1.4rem; text-align: center; line-height: 1; }
+.card-name    { font-size: .7rem; font-weight: 600; text-align: center; line-height: 1.2;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-rs      { font-size: .58rem; text-align: right; color: var(--text-dim); }
+/* Kártya háttérszínek típusonként */
+.card[data-type="pew"]         { background: var(--c-action); }
+.card[data-type="kiteri"]      { background: var(--c-react); }
+.card[data-type="energiaital"],
+.card[data-type="taxi"],
+.card[data-type="helikopter"],
+.card[data-type="parbaj"],
+.card[data-type="drone"],
+.card[data-type="gepuska"],
+.card[data-type="buli"],
+.card[data-type="plaza"],
+.card[data-type="zsebmetsz"],
+.card[data-type="lefegyverz"]  { background: var(--c-action); }
+.card[data-type="sportauto"],
+.card[data-type="gps"]         { background: var(--c-equip); }
+.card[data-type="letar"]       { background: var(--c-jail); }
+.card[data-type="bomba"]       { background: var(--c-bomb); }
+.card[data-type="golyoszoro"],
+.card[data-type="snajper"],
+.card[data-type="karabely"],
+.card[data-type="automat"]     { background: var(--c-weapon); }
+
+/* Akciógombok */
+.action-bar   { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .5rem; }
+
+/* ─── Gombok ──────────────────────────────────────────────────── */
+.btn          { border: none; border-radius: 10px; padding: .75rem 1.3rem; font-weight: 600;
+               cursor: pointer; transition: opacity .15s, transform .1s; font-size: .9rem; }
+.btn:active   { transform: scale(.97); opacity: .85; }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn.hidden   { display: none; }
+
+.btn-primary  { background: var(--accent); color: #000; }
+.btn-secondary{ background: var(--surface3); color: var(--text); border: 1px solid var(--border); }
+.btn-action   { background: var(--accent2); color: #fff; }
+.btn-danger   { background: var(--danger); color: #fff; }
+.btn-heal     { background: #1a3a2a; color: var(--safe); border: 1px solid var(--safe); font-size: .82rem; }
+
+/* ─── JÁTÉK VÉGE ─────────────────────────────────────────────── */
+#screen-gameover { align-items: center; justify-content: center; padding: 1.5rem; }
+.gameover-inner  { width: 100%; max-width: 420px; display: flex; flex-direction: column;
+                  align-items: center; gap: 1.2rem; text-align: center; }
+.gameover-icon   { font-size: 5rem; }
+.gameover-title  { font-family: 'Fredoka', sans-serif; font-size: 2.2rem; font-weight: 700; color: var(--warn); }
+.gameover-desc   { color: var(--text-mute); }
+.gameover-players { width: 100%; display: flex; flex-direction: column; gap: .5rem; }
+.gp-row          { display: flex; justify-content: space-between; align-items: center;
+                  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+                  padding: .7rem 1rem; }
+.gp-role         { font-size: .8rem; color: var(--text-mute); }
+
+/* ─── OVERLAY rendszer ───────────────────────────────────────── */
+.overlay { display: none; position: fixed; inset: 0; z-index: 200;
+           align-items: center; justify-content: center; padding: 1rem; }
+.overlay.visible { display: flex; }
+
+/* Körváltás overlay */
+.overlay-turn { background: rgba(9,11,21,.92); backdrop-filter: blur(6px);
+               flex-direction: column; justify-content: center; align-items: center;
+               cursor: pointer; }
+.turn-spotlight { text-align: center; animation: spotlight-in .4s ease-out; }
+@keyframes spotlight-in {
+  from { transform: scale(.75); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.ot-sub     { font-size: .85rem; color: var(--text-mute); margin-bottom: .4rem; letter-spacing: .05em; }
+.ot-name    { font-family: 'Fredoka', sans-serif; font-size: 3.5rem; font-weight: 700;
+             background: linear-gradient(135deg, #fff 30%, var(--accent));
+             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+             background-clip: text; line-height: 1.1; }
+.ot-myturn  { font-family: 'Fredoka', sans-serif; font-size: 1.8rem; font-weight: 700;
+             color: var(--safe); margin-top: .5rem; animation: blink-in .3s .4s both;
+             text-shadow: 0 0 20px rgba(41,230,122,.5); }
+.ot-role    { margin-top: .6rem; background: var(--surface); border: 1px solid var(--border);
+             border-radius: 10px; padding: .5rem 1.2rem; font-size: .88rem; display: inline-block; }
+.ot-tap-hint { position: absolute; bottom: 2.5rem; font-size: .78rem; color: var(--text-dim);
+              animation: pulse 2s ease-in-out infinite; }
+@keyframes blink-in { from{opacity:0;transform:scale(1.3)} to{opacity:1;transform:scale(1)} }
+
+/* Reakció overlay */
+.overlay-react { background: rgba(9,11,21,.95); flex-direction: column; }
+.react-inner   { width: 100%; max-width: 420px; background: var(--surface); border-radius: 18px;
+                border: 2px solid var(--danger); padding: 1.4rem; display: flex;
+                flex-direction: column; gap: .9rem; }
+.react-title   { font-family: 'Fredoka', sans-serif; font-size: 1.7rem; font-weight: 700; color: var(--danger); }
+.react-desc    { color: var(--text-mute); font-size: .88rem; }
+.react-cards   { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* Modalok */
+.modal-box    { width: 100%; max-width: 420px; background: var(--surface); border-radius: 16px;
+               border: 1.5px solid var(--border); padding: 1.3rem;
+               display: flex; flex-direction: column; gap: .8rem;
+               max-height: 85dvh; overflow-y: auto; }
+.modal-title  { font-family: 'Fredoka', sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--accent); }
+.modal-desc   { font-size: .82rem; color: var(--text-mute); }
+.overlay-cardpick, .overlay-target, .overlay-discard { background: rgba(9,11,21,.88); backdrop-filter: blur(4px); }
+
+/* Célpontválasztás */
+.target-list  { display: flex; flex-direction: column; gap: .5rem; }
+.target-item  { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px;
+               padding: .75rem 1rem; cursor: pointer; transition: border-color .15s; display: flex;
+               align-items: center; justify-content: space-between; }
+.target-item:active { border-color: var(--accent); background: #0e1730; }
+.target-item.selected { border-color: var(--warn); }
+.ti-name     { font-weight: 600; }
+.ti-detail   { font-size: .78rem; color: var(--text-mute); }
+
+/* Kártyaválasztás (plaza, ceos, smi) */
+.cp-cards    { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+.cp-players  { display: flex; flex-direction: column; gap: .5rem; }
+
+/* Dobás overlay */
+.discard-hand { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* ─── Segédosztályok ─────────────────────────────────────────── */
+.error-msg  { color: var(--danger); font-size: .82rem; text-align: center; margin-top: .5rem; }
+.error-msg.hidden, .hidden { display: none !important; }
+
+/* HP emojik */
+.hp-full  { color: var(--danger); }
+.hp-empty { color: var(--surface3); }
+
+/* Szerepszínek */
+.role-sheriff  { color: #ffd700; }
+.role-deputy   { color: #00d9ff; }
+.role-outlaw   { color: var(--danger); }
+.role-renegade { color: var(--accent2); }
+
+/* ─── Animációk ──────────────────────────────────────────────── */
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+.shake { animation: shake .3s ease; }
+
+@keyframes damage-flash {
+  from { background: rgba(255,56,112,.3); }
+  to   { background: transparent; }
+}
+.damage { animation: damage-flash .4s ease; }
+
+/* ─── Mobile-first tweaks ────────────────────────────────────── */
+@media (min-width: 480px) {
+  .my-hand .card { width: 90px; }
+  .char-options  { grid-template-columns: 1fr 1fr; gap: 1rem; }
+}

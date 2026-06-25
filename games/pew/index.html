@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Pew! – Gamecorner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     HOME – Névazonosítás + szoba
+══════════════════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-inner">
+    <div class="home-logo">
+      <span class="logo-pew">Pew!</span>
+      <p class="logo-sub">Bang! – modernes változat</p>
+    </div>
+    <div class="form-card">
+      <label class="field-label">Neved</label>
+      <input id="inp-name" type="text" placeholder="pl. Zsuzska" maxlength="18" autocomplete="off" spellcheck="false">
+
+      <label class="field-label" style="margin-top:1.2rem">Szobakód (hagyj üresen, ha te csinálod)</label>
+      <input id="inp-room" type="text" placeholder="pl. ABCD" maxlength="6" autocomplete="off" spellcheck="false"
+             style="text-transform:uppercase; letter-spacing:.15em">
+
+      <button id="btn-join" class="btn btn-primary" style="margin-top:1.4rem">Csatlakozás / Létrehozás</button>
+      <p id="home-error" class="error-msg hidden"></p>
+    </div>
+    <a href="../../index.html" class="back-link">← Vissza a főoldalra</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     LOBBY – Várakozó szoba
+══════════════════════════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-inner">
+    <div class="room-banner">
+      <span class="room-label">Szobakód</span>
+      <span id="lbl-room-code" class="room-code">—</span>
+    </div>
+    <div class="lobby-players" id="lobby-players"></div>
+    <div class="lobby-info">Várunk még legalább 4 játékosra (max. 7)</div>
+    <button id="btn-start" class="btn btn-primary" style="margin-top:1.4rem; display:none">Játék indítása</button>
+    <p id="lobby-error" class="error-msg hidden"></p>
+    <a href="../../index.html" class="back-link" id="btn-lobby-back">← Kilépés</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     KARAKTERVÁLASZTÁS
+══════════════════════════════════════════════════════ -->
+<div id="screen-charselect" class="screen">
+  <div class="charselect-inner">
+    <div class="charselect-top">
+      <h2 class="screen-title">Válassz karaktert!</h2>
+      <div id="role-reveal" class="role-reveal"></div>
+    </div>
+    <div id="char-options" class="char-options"></div>
+    <p id="charselect-waiting" class="waiting-msg hidden">Várakozás a többiekre…</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     FŐ JÁTÉKKÉPERNYŐ
+══════════════════════════════════════════════════════ -->
+<div id="screen-game" class="screen">
+
+  <!-- Felső sáv: aktuális kör jelzése -->
+  <div id="turn-banner" class="turn-banner">
+    <span id="turn-banner-name" class="turn-name"></span>
+    <span id="turn-banner-phase" class="turn-phase"></span>
+  </div>
+
+  <!-- Játékosok listája (kompakt) -->
+  <div id="player-list" class="player-list"></div>
+
+  <!-- Játéktábla: pakli, dobópakli, log -->
+  <div class="game-board">
+    <div class="piles-row">
+      <div class="pile-box" id="pile-deck">
+        <div class="pile-icon">🂠</div>
+        <div class="pile-count" id="deck-count">—</div>
+        <div class="pile-label">Pakli</div>
+      </div>
+      <div class="pile-box" id="pile-discard">
+        <div class="pile-top" id="discard-top">—</div>
+        <div class="pile-label">Dobott</div>
+      </div>
+    </div>
+    <div id="game-log" class="game-log"></div>
+  </div>
+
+  <!-- Saját kéz -->
+  <div class="my-area">
+    <div class="my-area-header">
+      <span id="my-char-label" class="my-char-label"></span>
+      <span id="my-hp-display" class="my-hp-display"></span>
+    </div>
+    <div id="my-hand" class="my-hand"></div>
+
+    <!-- Akciógombok -->
+    <div id="action-bar" class="action-bar">
+      <button id="btn-start-turn" class="btn btn-action hidden">🎯 Kör kezdése</button>
+      <button id="btn-draw"       class="btn btn-action hidden">🃏 Lapok húzása</button>
+      <button id="btn-end-turn"   class="btn btn-secondary hidden">✓ Kör vége</button>
+      <button id="btn-doc-heal"   class="btn btn-heal hidden">💊 DocDani gyógyítás (2 lap)</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     JÁTÉK VÉGE
+══════════════════════════════════════════════════════ -->
+<div id="screen-gameover" class="screen">
+  <div class="gameover-inner">
+    <div id="gameover-icon" class="gameover-icon"></div>
+    <h2 id="gameover-title" class="gameover-title"></h2>
+    <p  id="gameover-desc"  class="gameover-desc"></p>
+    <div id="gameover-players" class="gameover-players"></div>
+    <button id="btn-restart" class="btn btn-primary">Új játék</button>
+    <a href="../../index.html" class="back-link">← Főoldal</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     OVERLAY: KÖRVÁLTÁS (minden telefonon megjelenik)
+══════════════════════════════════════════════════════ -->
+<div id="overlay-turn" class="overlay overlay-turn">
+  <div class="turn-spotlight">
+    <div id="ot-sub" class="ot-sub">… köre következik</div>
+    <div id="ot-name" class="ot-name"></div>
+    <div id="ot-myturn" class="ot-myturn hidden">TE JÖSSZ!</div>
+    <div id="ot-role" class="ot-role hidden"></div>
+  </div>
+  <div class="ot-tap-hint">Érintsd meg a folytatáshoz</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     OVERLAY: REAKCIÓ (Pew!, Párbaj, Tömegtámadás)
+══════════════════════════════════════════════════════ -->
+<div id="overlay-react" class="overlay overlay-react">
+  <div class="react-inner">
+    <div id="react-title" class="react-title"></div>
+    <div id="react-desc"  class="react-desc"></div>
+    <div id="react-cards" class="react-cards"></div>
+    <button id="btn-react-take" class="btn btn-danger">Eltaláltak! -1 HP</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     OVERLAY: CÉLZÁS + ASZTALI KÁRTYA VÁLASZTÁS
+══════════════════════════════════════════════════════ -->
+<div id="overlay-target" class="overlay overlay-target">
+  <div class="modal-box">
+    <div id="target-title" class="modal-title"></div>
+    <div id="target-list"  class="target-list"></div>
+    <button id="btn-target-cancel" class="btn btn-secondary">Mégse</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     OVERLAY: PLÁZATÚRA / CÉOS / SZERENCSES SIMI / HACKER
+     (általános "lap-választás" overlay)
+══════════════════════════════════════════════════════ -->
+<div id="overlay-cardpick" class="overlay overlay-cardpick">
+  <div class="modal-box">
+    <div id="cp-title"  class="modal-title"></div>
+    <div id="cp-desc"   class="modal-desc"></div>
+    <div id="cp-cards"  class="cp-cards"></div>
+    <div id="cp-players" class="cp-players hidden"></div>
+    <button id="btn-cp-confirm" class="btn btn-primary hidden">Megerősítés</button>
+    <button id="btn-cp-cancel"  class="btn btn-secondary hidden">Mégse</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     OVERLAY: DOBÁS (kör vége, kézlimit)
+══════════════════════════════════════════════════════ -->
+<div id="overlay-discard" class="overlay overlay-discard">
+  <div class="modal-box">
+    <div class="modal-title" id="discard-title">Dobj lapokat!</div>
+    <p  id="discard-desc" class="modal-desc"></p>
+    <div id="discard-hand" class="discard-hand"></div>
+    <button id="btn-discard-confirm" class="btn btn-primary" disabled>Dobás megerősítése</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     OVERLAY: ASZTALI KÁRTYA VÁLASZTÁS (zsebmetsz / lefegyverz)
+══════════════════════════════════════════════════════ -->
+<div id="overlay-tablecards" class="overlay overlay-target">
+  <div class="modal-box">
+    <div id="tc-title"  class="modal-title"></div>
+    <div id="tc-cards"  class="target-list"></div>
+    <button id="btn-tc-random" class="btn btn-primary">Véletlenszerű (kézből)</button>
+    <button id="btn-tc-cancel" class="btn btn-secondary">Mégse</button>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
