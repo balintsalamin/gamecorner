@@ -37,6 +37,11 @@ service cloud.firestore {
       allow read, write: if roomId.size() == 4;
     }
 
+    // Pew! (Bang! modernizált változata)
+    match /pewRooms/{roomId} {
+      allow read, write: if roomId.size() == 4;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
