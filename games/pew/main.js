@@ -105,6 +105,8 @@ function render(state) {
     case 'playing':   goTo('screen-game');       renderGame(state);      break;
     case 'gameOver':  goTo('screen-gameover');   renderGameOver(state);  break;
   }
+
+  maybeScheduleBotMoves(state);
 }
 
 // ─── Lobby ────────────────────────────────────────────────────────────────────
@@ -859,6 +861,257 @@ function setupEventHandlers() {
   });
 }
 
+// ─── Bot rendszer ─────────────────────────────────────────────────────────────
+const activeBots    = new Map();  // botId → displayName
+const scheduledBots = new Set();  // botId-k, amelyeknek már van ütemezett lépése
+
+/** Mit tegyen a bot ebben az állapotban? Null = semmi. */
+function getBotAction(state, botId) {
+  if (!state) return null;
+  const botIdx = state.players.findIndex(p => p.id === botId);
+  if (botIdx === -1) return null;
+  const bot = state.players[botIdx];
+
+  // ── Karakterválasztás ──
+  if (state.phase === 'charSelect') {
+    if (bot.character || !bot.charOptions?.length) return null;
+    return { type:'chooseChar', playerId:botId, charKey:bot.charOptions[0] };
+  }
+
+  if (state.phase !== 'playing') return null;
+  if (!bot.alive) return null;
+
+  // ── Pending állapotokra reagálás (bármely játékos köre lehet) ──
+  const pend = state.pending;
+  if (pend) {
+    // Pew! ellen védekezés
+    if (pend.type === 'pew' && state.players[pend.target]?.id === botId) {
+      const miss = bot.hand.find(c => cardType(c) === 'kiteri');
+      return { type:'respond', playerId:botId, cardId: miss || null };
+    }
+    // Párbaj: Pew!-t dob, vagy feladja
+    if (pend.type === 'duel' && state.players[pend.currentTurn]?.id === botId) {
+      const pew = bot.hand.find(c => cardType(c) === 'pew');
+      return { type:'respond', playerId:botId, cardId: pew || null };
+    }
+    // Tömegtámadás (drone / gepuska)
+    if (pend.type === 'massAttack' && pend.remaining.length > 0 &&
+        state.players[pend.remaining[0]]?.id === botId) {
+      const need = pend.neededCard;
+      const card = bot.hand.find(c => cardType(c) === need);
+      return { type:'respond', playerId:botId, cardId: card || null };
+    }
+    // Plázatúra: első elérhető lapot veszi
+    if (pend.type === 'plaza' && pend.remaining.length > 0 &&
+        state.players[pend.remaining[0]]?.id === botId) {
+      return { type:'pickPlaza', playerId:botId, cardId: pend.revealed[0] };
+    }
+    // CéosCili: első 2 lapot tartja meg
+    if (pend.type === 'ceosDraw' && state.players[pend.player]?.id === botId) {
+      return { type:'ceosPick', playerId:botId, keepIndices:[0,1] };
+    }
+    // HackerHansi: random célpontot választ (vagy pakliból húz)
+    if (pend.type === 'hackerFirstDraw' && state.players[pend.player]?.id === botId) {
+      const tgt = state.players.find(p => p.alive && p.id !== botId && p.hand.length > 0);
+      return tgt
+        ? { type:'hackerFrom', playerId:botId, targetId:tgt.id }
+        : { type:'drawCards',  playerId:botId };
+    }
+    // SzerencsésSimi: első lapot választja
+    if (pend.type === 'smiLuckyFate' && state.players[pend.player]?.id === botId) {
+      return { type:'smiPick', playerId:botId, keepIndex:0 };
+    }
+    return null; // valaki más van soron
+  }
+
+  // ── Csak a bot körén ──
+  if (state.currentPlayerIndex !== botIdx) return null;
+
+  if (state.turnPhase === 'startOfTurn') return { type:'startTurn', playerId:botId };
+  if (state.turnPhase === 'draw')        return { type:'drawCards',  playerId:botId };
+
+  if (state.turnPhase === 'play') {
+    // Ellenséges célpontok listája (próbálja a főnököt vagy az outlawkat célozni)
+    const enemies = state.players
+      .map((_,i) => i)
+      .filter(i => i !== botIdx && state.players[i].alive);
+
+    // 1. Pew! – ha van célpont lőtávolságon belül
+    const pewCard = bot.hand.find(c => cardType(c)==='pew' && canPlayCard(state,botIdx,c));
+    if (pewCard) {
+      const tgts = getValidTargets(state, botIdx, pewCard);
+      if (tgts.length > 0) {
+        const ti = tgts[Math.floor(Math.random() * tgts.length)];
+        return { type:'playCard', playerId:botId, cardId:pewCard, targetId:state.players[ti].id };
+      }
+    }
+
+    // 2. Dróncsapás / Géppuska
+    const massCard = bot.hand.find(c => (cardType(c)==='drone'||cardType(c)==='gepuska') && canPlayCard(state,botIdx,c));
+    if (massCard) return { type:'playCard', playerId:botId, cardId:massCard };
+
+    // 3. Párbaj – bármely élő ellen
+    const duelCard = bot.hand.find(c => cardType(c)==='parbaj' && canPlayCard(state,botIdx,c));
+    if (duelCard && enemies.length > 0) {
+      const ti = enemies[Math.floor(Math.random() * enemies.length)];
+      return { type:'playCard', playerId:botId, cardId:duelCard, targetId:state.players[ti].id };
+    }
+
+    // 4. Gyógyítás ha alacsony HP
+    if (bot.hp < bot.maxHp) {
+      const beer = bot.hand.find(c => cardType(c)==='energiaital' && canPlayCard(state,botIdx,c));
+      if (beer) return { type:'playCard', playerId:botId, cardId:beer };
+    }
+
+    // 5. Lap húzás ha kevés lap van
+    if (bot.hand.length < 3) {
+      const draw = bot.hand.find(c => (cardType(c)==='taxi'||cardType(c)==='helikopter') && canPlayCard(state,botIdx,c));
+      if (draw) return { type:'playCard', playerId:botId, cardId:draw };
+    }
+
+    // 6. Fegyver felszerelése ha nincs
+    const hasWeapon = bot.tableCards.some(c => ['golyoszoro','snajper','karabely','automat'].includes(cardType(c)));
+    if (!hasWeapon) {
+      const weap = bot.hand.find(c => ['snajper','karabely','automat'].includes(cardType(c)) && canPlayCard(state,botIdx,c));
+      if (weap) return { type:'playCard', playerId:botId, cardId:weap };
+    }
+
+    // 7. Kör vége
+    return { type:'endTurn', playerId:botId };
+  }
+
+  if (state.turnPhase === 'discard') {
+    const excess = bot.hand.length - bot.hp;
+    if (excess <= 0) return { type:'endTurn', playerId:botId };
+    // Dobja el a "legkevésbé hasznos" lapokat: Kitért! → Buli → többi
+    const ranked = [...bot.hand].sort((a,b) => {
+      const score = c => {
+        const t = cardType(c);
+        if (t==='kiteri') return 0;
+        if (t==='buli'||t==='plaza') return 1;
+        if (t==='energiaital') return 2;
+        return 3; // Pew! és mások maradjanak
+      };
+      return score(a) - score(b);
+    });
+    return { type:'discardToLimit', playerId:botId, cardIds: ranked.slice(0, excess).map(c=>c) };
+  }
+
+  return null;
+}
+
+/** Minden state-frissítés után meghívódik – ütemezi a bot lépéseket. */
+function maybeScheduleBotMoves(state) {
+  if (!state || activeBots.size === 0) return;
+
+  for (const [botId] of activeBots) {
+    if (scheduledBots.has(botId)) continue;
+    if (!getBotAction(state, botId)) continue; // nincs teendő
+
+    scheduledBots.add(botId);
+    const delay = 600 + Math.random() * 800;
+
+    setTimeout(async () => {
+      scheduledBots.delete(botId);
+      if (!latestState) return;
+      const action = getBotAction(latestState, botId);
+      if (!action) return;
+      try { await dispatch(action); }
+      catch(e) { console.warn(`[Bot ${botId}]`, e.message); }
+    }, delay);
+  }
+}
+
+// ─── Dev panel ────────────────────────────────────────────────────────────────
+function updateDevPanel() {
+  const el = document.getElementById('dev-bot-status');
+  if (!el) return;
+  el.textContent = activeBots.size === 0
+    ? 'Nincs aktív bot.'
+    : `${activeBots.size} bot: ${[...activeBots.values()].join(', ')}`;
+}
+
+function initDevMode() {
+  // Aktiválás: URL-ben ?dev=1 VAGY localStorage 'pew_dev' === '1'
+  const active = new URLSearchParams(location.search).get('dev') === '1'
+    || localStorage.getItem('pew_dev') === '1';
+  if (active) localStorage.setItem('pew_dev', '1');
+
+  // Lebegő 🛠️ gomb
+  const devBtn = document.createElement('button');
+  devBtn.id = 'dev-btn';
+  devBtn.textContent = '🛠️';
+  devBtn.title = 'Dev mód';
+  devBtn.style.cssText = `position:fixed;bottom:1rem;right:1rem;z-index:500;
+    background:var(--surface2);border:1px solid var(--border);border-radius:50%;
+    width:42px;height:42px;font-size:1.1rem;cursor:pointer;
+    display:${active?'flex':'none'};align-items:center;justify-content:center;`;
+  document.body.appendChild(devBtn);
+
+  // Panel
+  const panel = document.createElement('div');
+  panel.id = 'dev-panel';
+  panel.style.cssText = `display:none;position:fixed;bottom:4.5rem;right:1rem;z-index:501;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:14px;
+    padding:1rem;min-width:220px;box-shadow:0 8px 24px rgba(0,0,0,.5);`;
+  panel.innerHTML = `
+    <div style="font-family:Fredoka,sans-serif;font-size:1rem;font-weight:600;margin-bottom:.8rem;color:var(--accent)">🛠️ Dev mód</div>
+    <button id="dev-add-bot"   style="width:100%;margin-bottom:.5rem" class="btn btn-secondary">🤖 Bot hozzáadása</button>
+    <button id="dev-clear-bot" style="width:100%" class="btn btn-secondary">🗑️ Botok törlése</button>
+    <div id="dev-bot-status" style="margin-top:.6rem;font-size:.75rem;color:var(--text-mute)">Nincs aktív bot.</div>`;
+  document.body.appendChild(panel);
+
+  devBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    updateDevPanel();
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', () => { panel.style.display = 'none'; });
+  panel.addEventListener('click', e => e.stopPropagation());
+
+  // Bot hozzáadása
+  document.getElementById('dev-add-bot').addEventListener('click', async () => {
+    if (!roomCode) { showToast('Előbb csatlakozz szobához!', 'danger'); return; }
+    if (latestState?.phase !== 'lobby') { showToast('Csak lobbiban lehet botot hozzáadni.', 'danger'); return; }
+    if (activeBots.size >= 6) { showToast('Maximum 6 bot adható hozzá.', 'danger'); return; }
+    const n    = activeBots.size + 1;
+    const name = `🤖 Bot ${n}`;
+    const id   = 'bot_' + Math.random().toString(36).slice(2,8);
+    try {
+      await dispatch({ type:'join', playerId:id, playerName:name });
+      activeBots.set(id, name);
+      updateDevPanel();
+      showToast(`${name} csatlakozott.`, 'safe');
+    } catch(e) { showToast('Hiba: ' + e.message, 'danger'); }
+  });
+
+  // Botok törlése (csak lobbyban)
+  document.getElementById('dev-clear-bot').addEventListener('click', async () => {
+    if (latestState?.phase !== 'lobby') { showToast('Csak lobbiban törölhető bot.', 'danger'); return; }
+    for (const [id] of activeBots) {
+      try { await dispatch({ type:'leave', playerId:id }); } catch(_) {}
+    }
+    activeBots.clear(); scheduledBots.clear();
+    updateDevPanel();
+    showToast('Botok eltávolítva.', 'safe');
+  });
+
+  // Titkos aktiválás: 5× koppintás a kód-mezőre
+  let tapCount = 0, tapTimer = null;
+  document.addEventListener('click', () => {
+    if (active) return;
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { tapCount = 0; }, 800);
+    if (tapCount >= 5) {
+      localStorage.setItem('pew_dev', '1');
+      devBtn.style.display = 'flex';
+      showToast('Dev mód aktiválva! 🛠️');
+      tapCount = 0;
+    }
+  });
+}
+
 // ─── Segédfüggvény ────────────────────────────────────────────────────────────
 function esc(str) {
   return String(str || '')
@@ -870,4 +1123,5 @@ function esc(str) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 setupEventHandlers();
+initDevMode();
 goTo('screen-home');
