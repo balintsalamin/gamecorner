@@ -31,7 +31,9 @@ async function dispatch(action) {
     await runTransaction(db, async tx => {
       const snap = await tx.get(ref);
       const state = snap.exists() ? snap.data().state : createInitialState();
-      const next = applyMove(state, { ...action, playerId: myId });
+      // Ha az action már tartalmaz playerId-t (pl. bot akció), ne írjuk felül
+      const merged = action.playerId ? action : { ...action, playerId: myId };
+      const next = applyMove(state, merged);
       tx.set(ref, { state: next, updatedAt: Date.now() });
     });
   } catch (e) {
