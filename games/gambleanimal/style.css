@@ -1,0 +1,260 @@
+/* ============================================================
+   GambleAnimal – Stíluslap
+   Téma: meleg "esti casino + állatkert" – sötét fenyőzöld alap,
+   antik arany kiemeléssel. Mobilra optimalizált.
+   ============================================================ */
+
+/* ─── Design tokenek ────────────────────────────────────────── */
+:root {
+  --bg:        #0e1812;
+  --surface:   #16241c;
+  --surface2:  #1d3327;
+  --surface3:  #264433;
+  --border:    #2f4d3b;
+  --accent:    #e8b84b;
+  --accent-ink:#1a1305;
+  --accent2:   #8fd9c4;
+  --danger:    #e0594a;
+  --safe:      #5fd38d;
+  --text:      #f3efe3;
+  --text-mute: #a9b8ac;
+  --text-dim:  #5f7468;
+  --shadow:    rgba(0,0,0,.55);
+
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100dvh; overflow-x: hidden;
+  background:
+    radial-gradient(ellipse at 50% -10%, #1c3326 0%, transparent 60%),
+    var(--bg);
+}
+input, button { font-family: inherit; font-size: inherit; }
+h1, h2, h3 { font-family: 'Fredoka', sans-serif; font-weight: 600; }
+button { cursor: pointer; }
+a { color: inherit; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ─── Képernyők ──────────────────────────────────────────────── */
+.screen { display: none; min-height: 100dvh; }
+.screen.active { display: flex; flex-direction: column; }
+
+.ga-inner { width: 100%; max-width: 480px; margin: 0 auto; padding: 1.1rem 1.1rem 2rem; display: flex; flex-direction: column; gap: 1.1rem; flex: 1; }
+
+/* ─── Felső sáv (vissza + egyenleg) ──────────────────────────── */
+.ga-topbar { display: flex; align-items: center; justify-content: space-between; gap: .8rem; }
+.ga-back { font-size: .85rem; color: var(--text-mute); text-decoration: none; padding: .4rem .2rem; white-space: nowrap; }
+.ga-back:hover { color: var(--accent); }
+.ga-balance { display: flex; align-items: center; gap: .4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: .4rem .9rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ga-balance .ic { font-size: 1rem; }
+.ga-balance.pulse { animation: balancePulse .5s ease; }
+@keyframes balancePulse { 0%{ transform: scale(1);} 35%{ transform: scale(1.12); color: var(--accent);} 100%{ transform: scale(1);} }
+
+/* ─── HUB / kezdőképernyő ────────────────────────────────────── */
+.ga-hero { text-align: center; padding-top: .2rem; }
+.ga-title { font-size: 2.1rem; letter-spacing: .01em; color: var(--accent); user-select: none; }
+.ga-subtitle { color: var(--text-mute); font-size: .85rem; margin-top: .25rem; }
+
+.carousel-wrap { position: relative; perspective: 1100px; height: 230px; display: flex; align-items: center; justify-content: center; }
+.carousel-track { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.carousel-card {
+  position: absolute; left: 50%; top: 50%; width: 188px; height: 198px; margin: -99px 0 0 -94px;
+  background: linear-gradient(160deg, var(--surface2), var(--surface));
+  border: 1px solid var(--border); border-radius: 22px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem;
+  box-shadow: 0 14px 32px rgba(0,0,0,.45);
+  transition: transform .45s cubic-bezier(.22,.9,.34,1), opacity .45s, box-shadow .45s;
+  backface-visibility: hidden;
+}
+.carousel-card.is-active { box-shadow: 0 18px 40px rgba(0,0,0,.55), 0 0 0 1.5px var(--accent); }
+.carousel-card .cc-emoji { font-size: 3.4rem; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.4)); }
+.carousel-card .cc-name { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.15rem; }
+.carousel-card .cc-tag { font-size: .72rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: .08em; }
+.carousel-card .cc-play {
+  margin-top: .3rem; background: var(--accent); color: var(--accent-ink); border: none;
+  border-radius: 999px; padding: .4rem 1rem; font-weight: 700; font-size: .8rem; display: none;
+}
+.carousel-card.is-active .cc-play { display: inline-block; }
+
+.carousel-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 1.2rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.carousel-nav:active { transform: translateY(-50%) scale(.92); }
+.carousel-prev { left: -4px; }
+.carousel-next { right: -4px; }
+
+.carousel-dots { display: flex; justify-content: center; gap: .4rem; margin-top: -.3rem; }
+.carousel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: background .25s, transform .25s; }
+.carousel-dot.is-active { background: var(--accent); transform: scale(1.3); }
+
+.ga-passive-info { text-align: center; font-size: .8rem; color: var(--text-mute); }
+.ga-passive-info b { color: var(--accent2); font-weight: 600; }
+
+.ga-zoo-btn {
+  display: flex; align-items: center; justify-content: center; gap: .6rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: .9rem 1rem; font-weight: 600; font-size: .95rem; color: var(--text);
+}
+.ga-zoo-btn:active { transform: scale(.98); }
+.ga-zoo-btn .zoo-mini { font-size: .75rem; color: var(--text-mute); font-weight: 500; }
+
+/* ─── Tét-panel (közös a két játékban) ───────────────────────── */
+.bet-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; gap: .7rem; }
+.bet-row { display: flex; align-items: center; gap: .6rem; }
+.bet-row label { font-size: .78rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+.bet-input {
+  flex: 1; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px;
+  padding: .65rem .8rem; color: var(--text); outline: none; font-weight: 700; font-variant-numeric: tabular-nums;
+  text-align: right; min-width: 0;
+}
+.bet-input:focus { border-color: var(--accent); }
+.bet-quick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .45rem; }
+.bet-quick {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 9px;
+  padding: .45rem 0; font-size: .78rem; font-weight: 600; color: var(--text-mute);
+}
+.bet-quick:active { transform: scale(.95); background: var(--surface3); color: var(--text); }
+.bet-progress { font-size: .73rem; color: var(--text-dim); text-align: center; }
+
+.btn { border: none; border-radius: 12px; padding: .85rem 1.3rem; font-weight: 700; font-size: .95rem; transition: transform .1s, opacity .15s; }
+.btn:active { transform: scale(.97); opacity: .9; }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); width: 100%; }
+.btn-secondary { background: var(--surface3); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-row { display: flex; gap: .6rem; }
+.btn-row .btn { flex: 1; }
+
+.result-line { text-align: center; font-weight: 700; font-size: 1.05rem; min-height: 1.4em; }
+.result-line.win { color: var(--safe); }
+.result-line.lose { color: var(--danger); }
+.result-line.push { color: var(--text-mute); }
+
+/* ─── Pig-Plinko ─────────────────────────────────────────────── */
+.plinko-board {
+  position: relative; width: 100%; aspect-ratio: 1 / 1.05;
+  background: linear-gradient(180deg, var(--surface2), var(--surface));
+  border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+}
+.plinko-peg { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--border); transform: translate(-50%, -50%); }
+.plinko-ball {
+  position: absolute; width: 26px; height: 26px; font-size: 22px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%);
+  transition: left .22s cubic-bezier(.4,0,.2,1), top .22s cubic-bezier(.4,0,.2,1); z-index: 5;
+  left: 50%; top: 4%; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5));
+}
+.plinko-ball.bounce { animation: ballBounce .22s ease; }
+@keyframes ballBounce { 0% { transform: translate(-50%,-50%) scale(1); } 45% { transform: translate(-50%,-50%) scale(1.3,.75); } 100% { transform: translate(-50%,-50%) scale(1); } }
+
+.plinko-slots { display: flex; gap: 3px; margin-top: .55rem; }
+.plinko-slot {
+  flex: 1; text-align: center; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: .4rem 0; font-size: .68rem; font-weight: 700; color: var(--text-dim);
+  transition: transform .2s, box-shadow .2s, background .2s, color .2s;
+}
+.plinko-slot.win-slot { color: var(--safe); }
+.plinko-slot.hit { background: var(--accent); color: var(--accent-ink); transform: scale(1.1); box-shadow: 0 0 0 2px var(--accent); }
+
+/* ─── Bird-Blackjack ─────────────────────────────────────────── */
+.bj-table { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 1.1rem 1rem; display: flex; flex-direction: column; gap: 1.1rem; }
+.bj-side { display: flex; flex-direction: column; gap: .5rem; align-items: center; }
+.bj-side-label { font-size: .75rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: .4rem; }
+.bj-total { font-weight: 700; color: var(--accent2); font-variant-numeric: tabular-nums; }
+.bj-hand { display: flex; min-height: 78px; align-items: center; justify-content: center; }
+.bj-card {
+  width: 50px; height: 72px; border-radius: 7px; background: var(--text); color: #1c1c1c;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.05rem; box-shadow: 0 3px 8px rgba(0,0,0,.4); position: relative;
+  border: 1px solid rgba(0,0,0,.08);
+}
+.bj-card:not(:first-child) { margin-left: -22px; }
+.bj-card.red { color: #b5302a; }
+.bj-card .suit { font-size: .85rem; }
+.bj-card.back {
+  background: linear-gradient(135deg, var(--surface3), var(--surface2));
+  display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+  border: 1px solid var(--accent);
+}
+.bj-card.flip { animation: cardFlip .35s ease; }
+@keyframes cardFlip { from { transform: rotateY(85deg); } to { transform: rotateY(0); } }
+.bj-card.deal-in { animation: cardDealIn .3s ease; }
+@keyframes cardDealIn { from { transform: translateY(-18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.bj-actions { display: none; gap: .6rem; }
+.bj-actions.active { display: flex; }
+.bj-actions .btn { flex: 1; }
+
+/* ─── Állatkert ──────────────────────────────────────────────── */
+.zoo-counts { display: flex; flex-wrap: wrap; gap: .5rem; }
+.zoo-badge { display: flex; align-items: center; gap: .4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: .35rem .8rem; font-size: .85rem; font-weight: 600; }
+.zoo-badge .n { color: var(--accent2); font-variant-numeric: tabular-nums; }
+
+.zoo-stage {
+  position: relative; width: 100%; height: min(56vh, 420px);
+  background: radial-gradient(ellipse at 50% 30%, #20382a 0%, var(--surface) 70%);
+  border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+}
+.zoo-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-dim); font-size: .85rem; padding: 2rem; }
+.zoo-sprite { position: absolute; left: 0; top: 0; font-size: 1.7rem; line-height: 1; transition: transform 2.6s ease-in-out; will-change: transform; pointer-events: none; }
+.zoo-door { position: absolute; right: 4px; top: 50%; font-size: 1.7rem; transform: translateY(-50%); opacity: .5; }
+.zoo-feed-heart { position: absolute; font-size: 1.1rem; pointer-events: none; animation: feedFloat 1.1s ease forwards; }
+@keyframes feedFloat { 0% { transform: translateY(0) scale(.6); opacity: 0; } 25% { opacity: 1; transform: translateY(-6px) scale(1.1); } 100% { transform: translateY(-46px) scale(.9); opacity: 0; } }
+
+.zoo-bottombar { display: flex; align-items: center; justify-content: space-between; gap: .8rem; }
+.zoo-feed-cost { font-size: .75rem; color: var(--text-dim); }
+
+/* ─── Üres állapot (ha minden el lenne rejtve – nem várt, de védekezünk) */
+.ga-empty { text-align: center; color: var(--text-dim); padding: 2rem 1rem; font-size: .85rem; }
+
+/* ─── Toast ──────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: .65rem 1.2rem; font-size: .82rem; z-index: 999; transition: opacity .3s;
+  max-width: 90vw; text-align: center; opacity: 0; pointer-events: none;
+}
+
+/* ─── Dev mód – lebegő gomb és panel (ua. minta, mint a többi játéknál) */
+#dev-btn {
+  position: fixed; bottom: 16px; right: 16px; width: 42px; height: 42px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text-mute);
+  font-size: 1.1rem; cursor: pointer; z-index: 500; box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  display: none; align-items: center; justify-content: center;
+}
+#dev-btn.show { display: flex; }
+#dev-btn:active { transform: scale(.9); }
+#dev-panel {
+  position: fixed; bottom: 66px; right: 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1rem; min-width: 250px; max-width: calc(100vw - 32px); z-index: 501;
+  box-shadow: 0 8px 24px rgba(0,0,0,.55); display: none;
+}
+#dev-panel.show { display: block; }
+#dev-panel h3 { font-size: .85rem; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .8rem; }
+.dev-row { margin-bottom: .85rem; }
+.dev-row label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--text-mute); margin-bottom: .3rem; }
+.dev-row label span { color: var(--accent2); font-weight: 700; }
+.dev-row input[type="range"] { width: 100%; accent-color: var(--accent); }
+#dev-panel .btn { width: 100%; font-size: .82rem; padding: .6rem; margin-top: .4rem; }
+
+/* ─── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .carousel-card, .zoo-sprite, .plinko-ball, .ga-balance.pulse, .bj-card.flip, .bj-card.deal-in, .zoo-feed-heart {
+    animation: none !important; transition-duration: .01ms !important;
+  }
+}
+
+/* ─── Apró képernyők ─────────────────────────────────────────── */
+@media (max-width: 360px) {
+  .carousel-card { width: 168px; height: 184px; margin: -92px 0 0 -84px; }
+  .bj-card { width: 44px; height: 64px; }
+}

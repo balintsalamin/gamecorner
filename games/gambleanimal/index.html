@@ -1,1 +1,158 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>GambleAnimal – Gamecorner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 
+  <!-- App-szerű viselkedés (kezdőképernyőről indítva, böngészősáv nélkül) -->
+  <link rel="manifest" href="../../manifest.json">
+  <meta name="theme-color" content="#0e1812">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GambleAnimal">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     HUB – játékválasztó (3D kártya-körhinta) + állatkert gomb
+══════════════════════════════════════════════════════ -->
+<div id="screen-hub" class="screen active">
+  <div class="ga-inner">
+    <div class="ga-topbar">
+      <a href="../../index.html" class="ga-back">← Játékok</a>
+      <div class="ga-balance" id="hub-balance"><span class="ic">🍪</span><span class="n">0</span></div>
+    </div>
+
+    <div class="ga-hero">
+      <h1 class="ga-title" id="ga-title">GambleAnimal</h1>
+      <p class="ga-subtitle">Válassz egy állat-témájú szerencsejátékot</p>
+    </div>
+
+    <div class="carousel-wrap">
+      <button class="carousel-nav carousel-prev" id="carousel-prev" aria-label="Előző">‹</button>
+      <div class="carousel-track" id="carousel-track"></div>
+      <button class="carousel-nav carousel-next" id="carousel-next" aria-label="Következő">›</button>
+    </div>
+    <div class="carousel-dots" id="carousel-dots"></div>
+
+    <p class="ga-passive-info" id="passive-info"></p>
+
+    <button class="ga-zoo-btn" id="btn-goto-zoo">
+      <span>🦁 Állatkert</span>
+      <span class="zoo-mini" id="zoo-mini"></span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PIG-PLINKO
+══════════════════════════════════════════════════════ -->
+<div id="screen-plinko" class="screen">
+  <div class="ga-inner">
+    <div class="ga-topbar">
+      <button class="ga-back" id="plinko-back" style="background:none;border:none">← GambleAnimal</button>
+      <div class="ga-balance" id="plinko-balance"><span class="ic">🍪</span><span class="n">0</span></div>
+    </div>
+    <h2>🐷 Pig-Plinko</h2>
+
+    <div class="plinko-board" id="plinko-board">
+      <div class="plinko-ball" id="plinko-ball">🐷</div>
+    </div>
+    <div class="plinko-slots" id="plinko-slots"></div>
+    <p class="result-line" id="plinko-result"></p>
+
+    <div class="bet-panel" id="plinko-bet-panel">
+      <div class="bet-row">
+        <label for="plinko-bet-input">Tét</label>
+        <input type="number" id="plinko-bet-input" class="bet-input" min="1" step="1" inputmode="numeric">
+      </div>
+      <div class="bet-quick-row">
+        <button class="bet-quick" data-pct="0.01">1%</button>
+        <button class="bet-quick" data-pct="0.1">10%</button>
+        <button class="bet-quick" data-pct="0.5">50%</button>
+        <button class="bet-quick" data-pct="1">100%</button>
+      </div>
+      <button class="btn btn-primary" id="plinko-play">🐷 Leejtés</button>
+      <p class="bet-progress" id="plinko-progress"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     BIRD-BLACKJACK
+══════════════════════════════════════════════════════ -->
+<div id="screen-blackjack" class="screen">
+  <div class="ga-inner">
+    <div class="ga-topbar">
+      <button class="ga-back" id="bj-back" style="background:none;border:none">← GambleAnimal</button>
+      <div class="ga-balance" id="bj-balance"><span class="ic">🍪</span><span class="n">0</span></div>
+    </div>
+    <h2>🐦 Bird-Blackjack</h2>
+
+    <div class="bj-table">
+      <div class="bj-side">
+        <div class="bj-side-label">🦉 Osztó <span class="bj-total" id="bj-dealer-total"></span></div>
+        <div class="bj-hand" id="bj-dealer-cards"></div>
+      </div>
+      <div class="bj-side">
+        <div class="bj-side-label">Te <span class="bj-total" id="bj-player-total"></span></div>
+        <div class="bj-hand" id="bj-player-cards"></div>
+      </div>
+    </div>
+
+    <p class="result-line" id="bj-result"></p>
+
+    <div class="btn-row bj-actions" id="bj-actions">
+      <button class="btn btn-secondary" id="bj-hit">Húzás</button>
+      <button class="btn btn-primary" id="bj-stand">Állok</button>
+    </div>
+
+    <div class="bet-panel" id="bj-bet-panel">
+      <div class="bet-row">
+        <label for="bj-bet-input">Tét</label>
+        <input type="number" id="bj-bet-input" class="bet-input" min="1" step="1" inputmode="numeric">
+      </div>
+      <div class="bet-quick-row">
+        <button class="bet-quick" data-pct="0.01">1%</button>
+        <button class="bet-quick" data-pct="0.1">10%</button>
+        <button class="bet-quick" data-pct="0.5">50%</button>
+        <button class="bet-quick" data-pct="1">100%</button>
+      </div>
+      <button class="btn btn-primary" id="bj-deal">🐦 Osztás</button>
+      <p class="bet-progress" id="bj-progress"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ÁLLATKERT
+══════════════════════════════════════════════════════ -->
+<div id="screen-zoo" class="screen">
+  <div class="ga-inner">
+    <div class="ga-topbar">
+      <button class="ga-back" id="zoo-back" style="background:none;border:none">← GambleAnimal</button>
+      <div class="ga-balance" id="zoo-balance"><span class="ic">🍪</span><span class="n">0</span></div>
+    </div>
+    <h2>🦁 Állatkert</h2>
+
+    <div class="zoo-counts" id="zoo-counts"></div>
+
+    <div class="zoo-stage" id="zoo-stage">
+      <div class="zoo-door" aria-hidden="true">🚪</div>
+    </div>
+
+    <div class="zoo-bottombar">
+      <button class="btn btn-secondary" id="btn-feed">🍪 Etetés</button>
+      <span class="zoo-feed-cost">1 🍪 / etetés</span>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
