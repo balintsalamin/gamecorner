@@ -11,7 +11,7 @@
   <!-- App-szerű viselkedés (kezdőképernyőről indítva, böngészősáv nélkül).
        Lásd a README "App mód" szakaszát a részletekért. -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#14141f">
+  <meta name="theme-color" content="#0d1117">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,52 +19,196 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
+
+  <!-- ================================================================
+       Dev overlay – játékok láthatósága
+       A "Játékok" feliratot 10× megnyomva jelenik meg.
+       ================================================================ -->
+  <div id="dev-overlay" class="dev-overlay" aria-hidden="true">
+    <div class="dev-sheet" role="dialog" aria-modal="true" aria-label="Fejlesztői beállítások">
+      <div class="dev-sheet-header">
+        <span class="dev-badge">DEV</span>
+        <h3>Játékok láthatósága</h3>
+        <button class="dev-close-btn" id="dev-close" aria-label="Bezárás">✕</button>
+      </div>
+      <ul class="dev-game-list" id="dev-game-list" role="list"></ul>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       Fejléc
+       ================================================================ -->
   <header class="hub-header">
-    <div class="stripe"></div>
-    <h1>Játékok</h1>
+    <div class="hub-glow-line" aria-hidden="true"></div>
+    <span class="hub-logo" aria-hidden="true">◈</span>
+    <h1 id="hub-title" title="Kattints 10× a dev menüért">Játékok</h1>
     <p>Válassz egy játékot, és hívd meg a barátaidat</p>
   </header>
 
-  <main class="game-grid">
-    <!-- ============================================================
-         ÚJ JÁTÉK HOZZÁADÁSA: másold ezt a <a class="game-tile"> blokkot,
-         állítsd be a hivatkozást (href), az ikont és a leírást.
-         ============================================================ -->
-    <a class="game-tile" href="games/uno/index.html">
-      <div class="tile-stripe"></div>
-      <div class="tile-icon">🎲</div>
-      <h2>Colorcards</h2>
-      <p>Multiplayer kártyajáték, teljesen testreszabható szabályokkal.</p>
-      <span class="tile-tag">2–8 játékos</span>
+  <!-- ================================================================
+       Játéklista
+       ÚJ JÁTÉK HOZZÁADÁSA: másold az <a class="game-tile"> blokkot,
+       adj neki egyedi id="tile-XXX" attribútumot (a dev menühöz),
+       és írd be a href, data-color, ikont, nevet és leírást.
+       ================================================================ -->
+  <main class="game-list" id="game-list">
+
+    <a class="game-tile" id="tile-colorcards" href="games/uno/index.html" data-color="#e63946">
+      <div class="tile-accent-bar"></div>
+      <div class="tile-main">
+        <div class="tile-icon-wrap" style="background:rgba(230,57,70,.12); border-color:rgba(230,57,70,.25)">🎲</div>
+        <div class="tile-text">
+          <h2>Colorcards</h2>
+          <p>Multiplayer kártyajáték, teljesen testreszabható szabályokkal.</p>
+          <span class="tile-tag">2–8 játékos</span>
+        </div>
+      </div>
+      <span class="tile-arrow" aria-hidden="true">›</span>
     </a>
 
-    <a class="game-tile" href="games/battleships/index.html">
-      <div class="tile-stripe"></div>
-      <div class="tile-icon">⚓</div>
-      <h2>Hajócsata</h2>
-      <p>Osztott képernyős top-down hajóütközet. Kontroller ajánlott.</p>
-      <span class="tile-tag">2 játékos</span>
+    <a class="game-tile" id="tile-battleships" href="games/battleships/index.html" data-color="#3a86ff">
+      <div class="tile-accent-bar"></div>
+      <div class="tile-main">
+        <div class="tile-icon-wrap" style="background:rgba(58,134,255,.12); border-color:rgba(58,134,255,.25)">⚓</div>
+        <div class="tile-text">
+          <h2>Hajócsata</h2>
+          <p>Osztott képernyős top-down hajóütközet. Kontroller ajánlott.</p>
+          <span class="tile-tag">2 játékos</span>
+        </div>
+      </div>
+      <span class="tile-arrow" aria-hidden="true">›</span>
     </a>
 
-    <a class="game-tile" href="games/hollandkocsma/index.html">
-      <div class="tile-stripe"></div>
-      <div class="tile-icon">🍻</div>
-      <h2>Holland kocsma</h2>
-      <p>Klasszikus lerakós kártyajáték francia kártyával, testreszabható szabályokkal.</p>
-      <span class="tile-tag">2–8 játékos</span>
+    <a class="game-tile" id="tile-hollandkocsma" href="games/hollandkocsma/index.html" data-color="#ffd166">
+      <div class="tile-accent-bar"></div>
+      <div class="tile-main">
+        <div class="tile-icon-wrap" style="background:rgba(255,209,102,.1); border-color:rgba(255,209,102,.25)">🍻</div>
+        <div class="tile-text">
+          <h2>Holland kocsma</h2>
+          <p>Klasszikus lerakós kártyajáték, testreszabható szabályokkal.</p>
+          <span class="tile-tag">2–8 játékos</span>
+        </div>
+      </div>
+      <span class="tile-arrow" aria-hidden="true">›</span>
     </a>
 
-    <a class="game-tile" href="games/pew/index.html">
-      <div class="tile-stripe"></div>
-      <div class="tile-icon">🔫</div>
-      <h2>Pew!</h2>
-      <p>Titkos szerepes lövöldözős kártyajáték. Főnök vs. terroristák vs. anarchista.</p>
-      <span class="tile-tag">4–7 játékos</span>
+    <a class="game-tile" id="tile-pew" href="games/pew/index.html" data-color="#bc6ff1">
+      <div class="tile-accent-bar"></div>
+      <div class="tile-main">
+        <div class="tile-icon-wrap" style="background:rgba(188,111,241,.12); border-color:rgba(188,111,241,.25)">🔫</div>
+        <div class="tile-text">
+          <h2>Pew!</h2>
+          <p>Titkos szerepes lövöldözős kártyajáték. Főnök vs. terroristák.</p>
+          <span class="tile-tag">4–7 játékos</span>
+        </div>
+      </div>
+      <span class="tile-arrow" aria-hidden="true">›</span>
     </a>
+
+    <a class="game-tile" id="tile-gambleanimal" href="games/gambleanimal/index.html" data-color="#e8b84b">
+      <div class="tile-accent-bar"></div>
+      <div class="tile-main">
+        <div class="tile-icon-wrap" style="background:rgba(232,184,75,.1); border-color:rgba(232,184,75,.25)">🎰</div>
+        <div class="tile-text">
+          <h2>GambleAnimal</h2>
+          <p>Állat-témájú szerencsejátékok, saját állatkert, jutalomfalatok.</p>
+          <span class="tile-tag">Egyedüli játékos</span>
+        </div>
+      </div>
+      <span class="tile-arrow" aria-hidden="true">›</span>
+    </a>
+
   </main>
 
   <footer class="hub-footer">
     <p>Szeretem a tejberizsát</p>
   </footer>
+
+  <script>
+    /* ──────────────────────────────────────────────────────────
+       Dev menü – játékok elrejtése/megjelenítése
+       ────────────────────────────────────────────────────────── */
+    const GAMES = [
+      { id: 'colorcards',    label: 'Colorcards' },
+      { id: 'battleships',   label: 'Hajócsata' },
+      { id: 'hollandkocsma', label: 'Holland kocsma' },
+      { id: 'pew',           label: 'Pew!' },
+      { id: 'gambleanimal',  label: 'GambleAnimal' },
+    ];
+
+    // hidden = { "colorcards": true, "pew": true, … }
+    let hidden = {};
+    try { hidden = JSON.parse(localStorage.getItem('gc-hidden') || '{}'); } catch (_) {}
+
+    function applyVisibility() {
+      GAMES.forEach(({ id }) => {
+        const el = document.getElementById('tile-' + id);
+        if (el) el.hidden = !!hidden[id];
+      });
+    }
+
+    function buildDevList() {
+      const list = document.getElementById('dev-game-list');
+      list.innerHTML = '';
+      GAMES.forEach(({ id, label }) => {
+        const li = document.createElement('li');
+        li.className = 'dev-game-row';
+        li.role = 'listitem';
+        const lbl = document.createElement('label');
+        lbl.className = 'dev-game-label';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !hidden[id];
+        cb.dataset.id = id;
+        cb.addEventListener('change', e => {
+          hidden[e.target.dataset.id] = !e.target.checked;
+          localStorage.setItem('gc-hidden', JSON.stringify(hidden));
+          applyVisibility();
+        });
+        const span = document.createElement('span');
+        span.textContent = label;
+        lbl.append(span, cb);
+        li.appendChild(lbl);
+        list.appendChild(li);
+      });
+    }
+
+    const overlay = document.getElementById('dev-overlay');
+
+    function openDevMenu() {
+      buildDevList();
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.getElementById('dev-close').focus();
+    }
+
+    function closeDevMenu() {
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    document.getElementById('dev-close').addEventListener('click', closeDevMenu);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeDevMenu(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDevMenu(); });
+
+    /* 10× koppintás a főcímen – dev menü feloldása */
+    let tapCount = 0, tapTimer;
+    document.getElementById('hub-title').addEventListener('click', () => {
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(() => { tapCount = 0; }, 2500);
+      if (tapCount >= 10) { tapCount = 0; openDevMenu(); }
+    });
+
+    /* Minden game-tile data-color → accent-bar szín beállítása */
+    document.querySelectorAll('.game-tile[data-color]').forEach(tile => {
+      const bar = tile.querySelector('.tile-accent-bar');
+      if (bar) bar.style.background = tile.dataset.color;
+    });
+
+    /* Inicializálás */
+    applyVisibility();
+  </script>
+
 </body>
 </html>
