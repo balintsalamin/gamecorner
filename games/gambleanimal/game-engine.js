@@ -22,8 +22,9 @@
 
 // ─── Játék-katalógus (témaállat, megjelenés) ───────────────────────────────
 export const GAMES = {
-  plinko: { id: 'plinko', name: 'Pig-Plinko', animalEmoji: '🐷', tag: 'Plinko' },
+  plinko:    { id: 'plinko',    name: 'Pig-Plinko',     animalEmoji: '🐷', tag: 'Plinko'    },
   blackjack: { id: 'blackjack', name: 'Bird-Blackjack', animalEmoji: '🐦', tag: 'Blackjack' },
+  slots:     { id: 'slots',     name: 'Sloth-Slots',    animalEmoji: '🦥', tag: 'Slots'     },
 };
 export const GAME_IDS = Object.keys(GAMES);
 
@@ -38,12 +39,14 @@ export function createInitialState(now = Date.now()) {
     treats: STARTING_TREATS,
     lastTick: now,
     games: {
-      plinko: { treatsWon: 0 },
+      plinko:    { treatsWon: 0 },
       blackjack: { treatsWon: 0 },
+      slots:     { treatsWon: 0 },
     },
     dev: {
-      plinko: { winProb: 0.45 },
+      plinko:    { winProb: 0.45 },
       blackjack: { winProb: 0.45 },
+      slots:     { winProb: 0.38 },
     },
   };
 }
@@ -57,8 +60,9 @@ export function migrateState(state) {
     ...state,
     games: { ...base.games, ...(state.games || {}) },
     dev: {
-      plinko: { ...base.dev.plinko, ...(state.dev?.plinko || {}) },
+      plinko:    { ...base.dev.plinko,    ...(state.dev?.plinko    || {}) },
       blackjack: { ...base.dev.blackjack, ...(state.dev?.blackjack || {}) },
+      slots:     { ...base.dev.slots,     ...(state.dev?.slots     || {}) },
     },
   };
 }
@@ -367,4 +371,99 @@ export function standBlackjack(state, hand, rng = Math.random) {
   const payout = resolvePayout(hand.stake, hand.player, dealerCards);
   const { state: next, profit } = applyBetResult(state, 'blackjack', hand.stake, payout);
   return { state: next, hand: finalHand, payout, profit, outcome: outcomeLabel(hand.stake, payout) };
+}
+
+// ============================================================================
+// SLOTH-SLOTS
+// ============================================================================
+export const SLOTS_SYMBOLS = ['🦥', '💎', '🍌', '🌿', '🌸', '🍀'];
+
+// Kifizetési szorzók 3 egyforma szimbólumnál.
+export const SLOTS_PAYOUTS = {
+  '🦥': 100, // jackpot
+  '💎': 25,
+  '🍌': 8,
+  '🌿': 5,
+  '🌸': 3,
+  '🍀': 2,
+};
+
+// 20-szimbólumos virtuális tárcsaszalag. Az egyes szimbólumok előfordulása
+// szabályozza a ritkaságukat: 🦥=1 (legritkább), 💎=2, 🍌=2, 🌿=4, 🌸=5, 🍀=6.
+export const SLOTS_REEL_STRIP = [
+  '🍀', '🌸', '🍀', '🌿', '🌸', '🍀', '🌸', '🌿', '🍀', '🍌',
+  '🌸', '🍀', '🌿', '🍀', '🌸', '💎', '🌿', '🍌', '🦥', '💎',
+];
+
+// Szimbólum → a szalagon lévő pozíciók (modulbetöltéskor egyszer kiszámítva).
+const SLOTS_POSITIONS = (() => {
+  const m = {};
+  SLOTS_REEL_STRIP.forEach((s, i) => { (m[s] = m[s] || []).push(i); });
+  return m;
+})();
+
+// A 3 látható szimbólum egy adott megállónál: [felső, középső/payline, alsó].
+export function slotsReelWindow(stopPos) {
+  const n = SLOTS_REEL_STRIP.length;
+  return [
+    SLOTS_REEL_STRIP[((stopPos - 1) % n + n) % n],
+    SLOTS_REEL_STRIP[stopPos % n],
+    SLOTS_REEL_STRIP[(stopPos + 1) % n],
+  ];
+}
+
+// Nyerő kombináció megoszlása (a "nyer" vödrön belül): weight = relatív esély.
+const SLOTS_WIN_COMBOS = [
+  { sym: '🦥', weight: 1  }, // 100× jackpot
+  { sym: '💎', weight: 3  }, // 25×
+  { sym: '🍌', weight: 8  }, // 8×
+  { sym: '🌿', weight: 15 }, // 5×
+  { sym: '🌸', weight: 20 }, // 3×
+  { sym: '🍀', weight: 53 }, // 2×
+];
+
+function pickWinSym(rng) {
+  const total = SLOTS_WIN_COMBOS.reduce((s, c) => s + c.weight, 0);
+  let r = rng() * total;
+  for (const c of SLOTS_WIN_COMBOS) { r -= c.weight; if (r <= 0) return c.sym; }
+  return SLOTS_WIN_COMBOS[SLOTS_WIN_COMBOS.length - 1].sym;
+}
+
+// Veszítő kombináció: a 3 középső szimbólum NEM mind azonos.
+function pickLoseSymbols(rng) {
+  let syms, attempts = 0;
+  do {
+    syms = [0, 0, 0].map(() => SLOTS_SYMBOLS[Math.floor(rng() * SLOTS_SYMBOLS.length)]);
+    attempts++;
+  } while (attempts < 200 && syms[0] === syms[1] && syms[1] === syms[2]);
+  return syms;
+}
+
+// Véletlen megálló-pozíció, ami a kért szimbólumot mutatja a payline-on.
+function stopPosFor(sym, rng) {
+  const positions = SLOTS_POSITIONS[sym];
+  return positions[Math.floor(rng() * positions.length)];
+}
+
+// Egy pörgetés lejátszása.
+// Visszatér: { state, centerSymbols, stopPositions, multiplier, payout, profit, isJackpot }
+// – centerSymbols: a 3 payline-szimbólum (ez határozza meg a nyereményt)
+// – stopPositions: tárcsánkénti megálló-index (UI animációhoz: slotsReelWindow(pos) adja a 3 látható sort)
+export function playSlots(state, stake, rng = Math.random) {
+  if (!Number.isInteger(stake) || stake <= 0) throw new Error('Érvénytelen tét.');
+  if (stake > state.treats) throw new Error('Nincs ennyi jutalomfalatod.');
+
+  const winProb = state.dev?.slots?.winProb ?? 0.38;
+  const centerSymbols = rng() < winProb
+    ? (() => { const s = pickWinSym(rng); return [s, s, s]; })()
+    : pickLoseSymbols(rng);
+
+  const stopPositions = centerSymbols.map(sym => stopPosFor(sym, rng));
+  const isWin = centerSymbols[0] === centerSymbols[1] && centerSymbols[1] === centerSymbols[2];
+  const multiplier = isWin ? (SLOTS_PAYOUTS[centerSymbols[0]] ?? 0) : 0;
+  const payout = Math.round(stake * multiplier);
+  const isJackpot = multiplier === 100;
+
+  const { state: next, profit } = applyBetResult(state, 'slots', stake, payout);
+  return { state: next, centerSymbols, stopPositions, multiplier, payout, profit, isJackpot };
 }

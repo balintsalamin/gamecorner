@@ -153,6 +153,65 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════
+     SLOTH-SLOTS
+══════════════════════════════════════════════════════ -->
+<div id="screen-slots" class="screen">
+  <div class="ga-inner">
+    <div class="ga-topbar">
+      <button class="ga-back" id="slots-back" style="background:none;border:none">← GambleAnimal</button>
+      <div class="ga-balance" id="slots-balance"><span class="ic">🍪</span><span class="n">0</span></div>
+    </div>
+    <h2>🦥 Sloth-Slots</h2>
+
+    <div class="slots-machine" id="slots-machine">
+      <div class="slots-reels">
+        <div class="slots-payline-overlay" aria-hidden="true"></div>
+
+        <div class="slot-reel-col" id="reel-col-0">
+          <div class="reel-sym reel-prev"   id="reel-0-0">🍌</div>
+          <div class="reel-sym reel-center" id="reel-0-1">🦥</div>
+          <div class="reel-sym reel-next"   id="reel-0-2">💎</div>
+        </div>
+
+        <div class="slot-reel-col" id="reel-col-1">
+          <div class="reel-sym reel-prev"   id="reel-1-0">🍌</div>
+          <div class="reel-sym reel-center" id="reel-1-1">🦥</div>
+          <div class="reel-sym reel-next"   id="reel-1-2">💎</div>
+        </div>
+
+        <div class="slot-reel-col" id="reel-col-2">
+          <div class="reel-sym reel-prev"   id="reel-2-0">🍌</div>
+          <div class="reel-sym reel-center" id="reel-2-1">🦥</div>
+          <div class="reel-sym reel-next"   id="reel-2-2">💎</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="result-line" id="slots-result"></p>
+
+    <details class="slots-paytable">
+      <summary>📋 Kifizetési táblázat</summary>
+      <div class="paytable-grid" id="slots-paytable-grid"></div>
+    </details>
+
+    <div class="bet-panel" id="slots-bet-panel">
+      <div class="bet-row">
+        <label for="slots-bet-input">Tét</label>
+        <input type="number" id="slots-bet-input" class="bet-input" min="1" step="1" inputmode="numeric">
+      </div>
+      <div class="bet-quick-row">
+        <button class="bet-quick" data-pct="0.01">1%</button>
+        <button class="bet-quick" data-pct="0.1">10%</button>
+        <button class="bet-quick" data-pct="0.5">50%</button>
+        <button class="bet-quick" data-pct="1">100%</button>
+      </div>
+      <button class="btn btn-primary" id="slots-spin">🦥 Pörgetés!</button>
+      <p class="bet-progress" id="slots-progress"></p>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="main.js"></script>
 </body>
 </html>

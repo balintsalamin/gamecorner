@@ -258,3 +258,127 @@ a { color: inherit; }
   .carousel-card { width: 168px; height: 184px; margin: -92px 0 0 -84px; }
   .bj-card { width: 44px; height: 64px; }
 }
+
+/* ─── Sloth-Slots ─────────────────────────────────────────────── */
+.slots-machine {
+  background: linear-gradient(160deg, #162219 0%, var(--surface) 100%);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 1rem 1rem .9rem;
+  position: relative;
+  box-shadow: 0 6px 24px rgba(0,0,0,.45);
+}
+
+.slots-reels {
+  display: flex;
+  background: #06100a;
+  border-radius: 13px;
+  border: 2px solid rgba(232,184,75,.16);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Payline highlight – finom arany sáv a középső sorban */
+.slots-payline-overlay {
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  transform: translateY(-50%);
+  height: 76px;
+  background: rgba(232,184,75,.035);
+  border-top: 1px solid rgba(232,184,75,.18);
+  border-bottom: 1px solid rgba(232,184,75,.18);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.slot-reel-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.slot-reel-col + .slot-reel-col {
+  border-left: 2px solid rgba(232,184,75,.08);
+}
+
+.reel-sym {
+  width: 100%;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.reel-sym.reel-prev,
+.reel-sym.reel-next  { opacity: .25; font-size: 1.65rem; }
+.reel-sym.reel-center { font-size: 2.7rem; position: relative; z-index: 2; }
+
+/* Spinning: elmosódás az összes soron */
+.slot-reel-col.spinning .reel-sym          { filter: blur(2px);   opacity: .65; }
+.slot-reel-col.spinning .reel-sym.reel-prev,
+.slot-reel-col.spinning .reel-sym.reel-next { filter: blur(4px);  opacity: .25; }
+
+/* Landing bounce – egy-egy tárcsa megállásakor */
+@keyframes slotLand {
+  0%   { transform: translateY(0);    }
+  18%  { transform: translateY(13px); }
+  42%  { transform: translateY(-5px); }
+  65%  { transform: translateY(3px);  }
+  82%  { transform: translateY(-1px); }
+  100% { transform: translateY(0);    }
+}
+.slot-reel-col.land { animation: slotLand .48s cubic-bezier(.22,.9,.34,1); }
+
+/* Jackpot – gép kerete villog aranyban */
+@keyframes jackpotMachineFlash {
+  0%, 100% { border-color: rgba(232,184,75,.16); box-shadow: 6px 24px rgba(0,0,0,.45); }
+  50%       { border-color: var(--accent);        box-shadow: 0 0 22px rgba(232,184,75,.4); }
+}
+.slots-machine.jackpot { animation: jackpotMachineFlash .5s ease 7; }
+
+/* Jackpot – a 3 középső emoji ugrik-pörög */
+@keyframes jackpotSymbol {
+  0%   { transform: scale(1)    rotate(0deg);  }
+  20%  { transform: scale(1.55) rotate(-9deg); }
+  45%  { transform: scale(1.4)  rotate(7deg);  }
+  70%  { transform: scale(1.5)  rotate(-4deg); }
+  100% { transform: scale(1.35) rotate(0deg);  }
+}
+.slot-reel-col.jackpot .reel-center {
+  animation: jackpotSymbol .65s cubic-bezier(.22,.9,.34,1) forwards;
+}
+
+/* Kifizetési táblázat */
+.slots-paytable {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .75rem 1rem;
+}
+.slots-paytable summary {
+  font-size: .8rem;
+  color: var(--text-mute);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+.slots-paytable summary::-webkit-details-marker { display: none; }
+.paytable-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .28rem .9rem;
+  margin-top: .65rem;
+}
+.paytable-grid span { font-size: .85rem; }
+.pt-mult { font-weight: 700; color: var(--accent); text-align: right; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .slot-reel-col.land,
+  .slot-reel-col.jackpot .reel-center,
+  .slots-machine.jackpot { animation: none !important; }
+}

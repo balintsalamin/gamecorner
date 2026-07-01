@@ -13,6 +13,7 @@ import {
   applyPassiveIncome, feedAnimal,
   PLINKO_ROWS, PLINKO_MULTIPLIERS, plinkoIsWinSlot, playPlinko,
   handTotal, startBlackjack, hitBlackjack, resolveBust, standBlackjack,
+  SLOTS_PAYOUTS, SLOTS_REEL_STRIP, slotsReelWindow, playSlots,
 } from './game-engine.js';
 
 // ─── Mentés ─────────────────────────────────────────────────────────────────
@@ -186,8 +187,9 @@ function setupCarouselControls() {
 }
 
 function enterGame(id) {
-  if (id === 'plinko') { goTo('screen-plinko'); prepPlinkoScreen(); }
+  if (id === 'plinko')    { goTo('screen-plinko');    prepPlinkoScreen();    }
   else if (id === 'blackjack') { goTo('screen-blackjack'); prepBlackjackScreen(); }
+  else if (id === 'slots')     { goTo('screen-slots');     prepSlotsScreen();     }
 }
 
 function renderHubExtras() {
@@ -445,6 +447,140 @@ function handleBjStand() {
 }
 
 // ============================================================================
+// SLOTH-SLOTS
+// ============================================================================
+const SLOTS_STOP_DELAYS  = [900, 1450, 2000]; // ms – egy-egy tárcsa megáll
+const SLOTS_SPIN_MS      = 65;                // pörgési ticker intervallum
+
+let slotsSpinning      = false;
+let _slotsInterval     = null;
+let _slotsSpinPos      = [0, 7, 14];         // kezdő fáziskülönbség tárcsánként
+let _reelStopped       = [false, false, false];
+
+function slotsSetReel(reelIdx, symbols) {
+  // symbols = [felső, közép, alsó]
+  for (let row = 0; row < 3; row++) {
+    document.getElementById(`reel-${reelIdx}-${row}`).textContent = symbols[row];
+  }
+}
+
+function prepSlotsScreen() {
+  capBetInput(document.getElementById('slots-bet-input'));
+  const inp = document.getElementById('slots-bet-input');
+  if (!inp.value || inp.value === '0') inp.value = String(Math.min(10, Math.max(1, state.treats)));
+  renderSlotsProgress();
+  document.getElementById('slots-result').textContent = '';
+  document.getElementById('slots-result').className = 'result-line';
+  // Alapállapot: 3× 🦥 a payline-on (csak vizuális fogadtatás)
+  for (let i = 0; i < 3; i++) slotsSetReel(i, slotsReelWindow(18)); // 18 = 🦥 pozíció
+  // Kifizetési táblázat (csak egyszer töltjük be)
+  const grid = document.getElementById('slots-paytable-grid');
+  if (grid && !grid.children.length) {
+    for (const [sym, mult] of Object.entries(SLOTS_PAYOUTS)) {
+      grid.insertAdjacentHTML('beforeend',
+        `<span>${sym}${sym}${sym}</span><span class="pt-mult">${mult}×${mult === 100 ? ' 🎉' : ''}</span>`);
+    }
+  }
+}
+
+function renderSlotsProgress() {
+  document.getElementById('slots-progress').textContent =
+    `${treatsToNextAnimal(state, 'slots')} 🍪 a következő 🦥-ig (eddig: ${animalCount(state, 'slots')} 🦥)`;
+}
+
+async function handleSlotsSpin() {
+  if (slotsSpinning) return;
+
+  const input = document.getElementById('slots-bet-input');
+  const stake = Math.floor(Number(input.value));
+  if (!Number.isFinite(stake) || stake <= 0) { showToast('Adj meg egy érvényes tétet!'); return; }
+  if (stake > state.treats)                   { showToast('Nincs ennyi jutalomfalatod.'); return; }
+
+  let result;
+  try { result = playSlots(state, stake); }
+  catch (e) { showToast(e.message); return; }
+
+  slotsSpinning = true;
+  document.getElementById('slots-spin').disabled = true;
+  document.getElementById('slots-result').textContent = '';
+  document.getElementById('slots-result').className = 'result-line';
+
+  // Véletlen fázisból indítjuk a tárcsákat
+  _reelStopped  = [false, false, false];
+  _slotsSpinPos = [
+    Math.floor(Math.random() * SLOTS_REEL_STRIP.length),
+    Math.floor(Math.random() * SLOTS_REEL_STRIP.length),
+    Math.floor(Math.random() * SLOTS_REEL_STRIP.length),
+  ];
+  for (let i = 0; i < 3; i++) {
+    document.getElementById(`reel-col-${i}`).classList.add('spinning');
+    slotsSetReel(i, slotsReelWindow(_slotsSpinPos[i]));
+  }
+
+  // Pörgési ticker: a szalag szimbólumain lép végig sequentially
+  _slotsInterval = setInterval(() => {
+    for (let i = 0; i < 3; i++) {
+      if (!_reelStopped[i]) {
+        _slotsSpinPos[i] = (_slotsSpinPos[i] + 1) % SLOTS_REEL_STRIP.length;
+        slotsSetReel(i, slotsReelWindow(_slotsSpinPos[i]));
+      }
+    }
+  }, SLOTS_SPIN_MS);
+
+  // Megálló-animáció – tárcsánként eltérő késleltetéssel
+  const stopPromises = result.stopPositions.map((stopPos, i) =>
+    new Promise(resolve => setTimeout(() => {
+      _reelStopped[i] = true; // először állítjuk le, aztán renderelünk
+      const col = document.getElementById(`reel-col-${i}`);
+      col.classList.remove('spinning');
+      slotsSetReel(i, slotsReelWindow(stopPos));
+      col.classList.add('land');
+      setTimeout(() => { col.classList.remove('land'); resolve(); }, 480);
+    }, SLOTS_STOP_DELAYS[i]))
+  );
+
+  await Promise.all(stopPromises);
+  clearInterval(_slotsInterval);
+
+  // Állapot frissítése
+  const beforeAnimals = animalCount(state, 'slots');
+  state = result.state;
+  persist();
+  renderAllBalances(true);
+  renderSlotsProgress();
+  renderHubExtras();
+  capBetInput(input);
+  notifyNewAnimals('slots', beforeAnimals, animalCount(state, 'slots'));
+
+  // Eredmény megjelenítése
+  const resEl = document.getElementById('slots-result');
+  if (result.isJackpot) {
+    resEl.textContent = '🎰 JACKPOT!! 100× 🦥🦥🦥 🎰';
+    resEl.className = 'result-line win';
+    // Tárcsák csillognak egymás után
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const col = document.getElementById(`reel-col-${i}`);
+        col.classList.add('jackpot');
+        setTimeout(() => col.classList.remove('jackpot'), 2600);
+      }, i * 130);
+    }
+    const machine = document.getElementById('slots-machine');
+    machine.classList.add('jackpot');
+    setTimeout(() => machine.classList.remove('jackpot'), 3500);
+  } else if (result.profit > 0) {
+    resEl.textContent = `${result.multiplier}×  →  +${result.profit} 🍪`;
+    resEl.className = 'result-line win';
+  } else {
+    resEl.textContent = `Nem nyertél.  (−${Math.abs(result.profit)} 🍪)`;
+    resEl.className = 'result-line lose';
+  }
+
+  slotsSpinning = false;
+  document.getElementById('slots-spin').disabled = false;
+}
+
+// ============================================================================
 // ÁLLATKERT
 // ============================================================================
 let zooSprites = [];
@@ -611,6 +747,10 @@ function initDevMode() {
       <label>🐦 Bird-Blackjack nyerési esély <span id="dev-bj-val"></span></label>
       <input type="range" id="dev-bj-prob" min="0" max="100" step="1">
     </div>
+    <div class="dev-row">
+      <label>🦥 Sloth-Slots nyerési esély <span id="dev-slots-val"></span></label>
+      <input type="range" id="dev-slots-prob" min="0" max="100" step="1">
+    </div>
     <button class="btn btn-secondary" id="dev-add-treats" type="button">+1000 🍪 (teszteléshez)</button>
     <button class="btn btn-danger" id="dev-reset" type="button">🗑️ Mentés törlése</button>
   `;
@@ -621,14 +761,21 @@ function initDevMode() {
   devPanel.addEventListener('click', e => e.stopPropagation());
 
   const plinkoSlider = document.getElementById('dev-plinko-prob');
-  const bjSlider = document.getElementById('dev-bj-prob');
-  const plinkoVal = document.getElementById('dev-plinko-val');
-  const bjVal = document.getElementById('dev-bj-val');
+  const bjSlider     = document.getElementById('dev-bj-prob');
+  const slotsSlider  = document.getElementById('dev-slots-prob');
+  const plinkoVal    = document.getElementById('dev-plinko-val');
+  const bjVal        = document.getElementById('dev-bj-val');
+  const slotsVal     = document.getElementById('dev-slots-val');
 
-  plinkoSlider.value = String(Math.round(state.dev.plinko.winProb * 100));
-  bjSlider.value = String(Math.round(state.dev.blackjack.winProb * 100));
-  plinkoVal.textContent = plinkoSlider.value + '%';
-  bjVal.textContent = bjSlider.value + '%';
+  function syncDevSliders() {
+    plinkoSlider.value = String(Math.round(state.dev.plinko.winProb * 100));
+    bjSlider.value     = String(Math.round(state.dev.blackjack.winProb * 100));
+    slotsSlider.value  = String(Math.round(state.dev.slots.winProb * 100));
+    plinkoVal.textContent = plinkoSlider.value + '%';
+    bjVal.textContent     = bjSlider.value + '%';
+    slotsVal.textContent  = slotsSlider.value + '%';
+  }
+  syncDevSliders();
 
   plinkoSlider.addEventListener('input', () => {
     state.dev.plinko.winProb = Number(plinkoSlider.value) / 100;
@@ -638,6 +785,11 @@ function initDevMode() {
   bjSlider.addEventListener('input', () => {
     state.dev.blackjack.winProb = Number(bjSlider.value) / 100;
     bjVal.textContent = bjSlider.value + '%';
+    persist();
+  });
+  slotsSlider.addEventListener('input', () => {
+    state.dev.slots.winProb = Number(slotsSlider.value) / 100;
+    slotsVal.textContent = slotsSlider.value + '%';
     persist();
   });
 
@@ -655,10 +807,7 @@ function initDevMode() {
     persist();
     renderAllBalances(true);
     renderHubExtras();
-    plinkoSlider.value = String(Math.round(state.dev.plinko.winProb * 100));
-    bjSlider.value = String(Math.round(state.dev.blackjack.winProb * 100));
-    plinkoVal.textContent = plinkoSlider.value + '%';
-    bjVal.textContent = bjSlider.value + '%';
+    syncDevSliders();
     showToast('Mentés törölve, friss kezdés.');
   });
 
@@ -681,6 +830,7 @@ function setupEventHandlers() {
   document.getElementById('btn-goto-zoo').addEventListener('click', () => { goTo('screen-zoo'); enterZoo(); });
   document.getElementById('plinko-back').addEventListener('click', goToHub);
   document.getElementById('bj-back').addEventListener('click', goToHub);
+  document.getElementById('slots-back').addEventListener('click', goToHub);
   document.getElementById('zoo-back').addEventListener('click', goToHub);
 
   document.querySelectorAll('#plinko-bet-panel .bet-quick').forEach(btn => {
@@ -693,11 +843,17 @@ function setupEventHandlers() {
       document.getElementById('bj-bet-input').value = String(quickBetAmount(state.treats, Number(btn.dataset.pct)));
     });
   });
+  document.querySelectorAll('#slots-bet-panel .bet-quick').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('slots-bet-input').value = String(quickBetAmount(state.treats, Number(btn.dataset.pct)));
+    });
+  });
 
   document.getElementById('plinko-play').addEventListener('click', handlePlinkoPlay);
   document.getElementById('bj-deal').addEventListener('click', handleBjDeal);
   document.getElementById('bj-hit').addEventListener('click', handleBjHit);
   document.getElementById('bj-stand').addEventListener('click', handleBjStand);
+  document.getElementById('slots-spin').addEventListener('click', handleSlotsSpin);
   document.getElementById('btn-feed').addEventListener('click', handleFeed);
 }
 
