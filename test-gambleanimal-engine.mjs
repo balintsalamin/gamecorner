@@ -19,6 +19,7 @@ import {
   createDeck, shuffle, handTotal, isBust, isBlackjack, classifyOutcome,
   dealRound, playerHit, decideTarget, playDealer, resolvePayout,
   startBlackjack, hitBlackjack, resolveBust, standBlackjack,
+  SLOTS_SYMBOLS, SLOTS_PAYOUTS, SLOTS_REEL_STRIP, slotsReelWindow, playSlots,
 } from './games/gambleanimal/game-engine.js';
 
 let pass = 0, fail = 0;
@@ -37,7 +38,7 @@ function approx(actual, expected, tolerance, msg) {
 // Alap állapot / katalógus
 // ----------------------------------------------------------------------
 {
-  eq(GAME_IDS, ['plinko', 'blackjack'], 'GAME_IDS sorrend');
+  eq(GAME_IDS, ['plinko', 'blackjack', 'slots'], 'GAME_IDS sorrend');
   assert(GAMES.plinko.animalEmoji === '🐷', 'plinko témaállat = malac');
   assert(GAMES.blackjack.animalEmoji === '🐦', 'blackjack témaállat = madár');
 
@@ -357,3 +358,141 @@ function approx(actual, expected, tolerance, msg) {
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail > 0 ? 1 : 0);
+
+// ============================================================================
+// SLOTH-SLOTS
+// ============================================================================
+{
+  // Szalag ellenőrzése
+  eq(SLOTS_REEL_STRIP.length, 20, 'SLOTS_REEL_STRIP pontosan 20 szimbólumból áll');
+  const counts = {};
+  SLOTS_REEL_STRIP.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
+  eq(counts['🦥'], 1, '🦥 pontosan 1× szerepel a szalagon (jackpot = ritka)');
+  eq(counts['💎'], 2, '💎 pontosan 2× szerepel');
+  eq(counts['🍌'], 2, '🍌 pontosan 2× szerepel');
+  eq(counts['🌿'], 4, '🌿 pontosan 4× szerepel');
+  eq(counts['🌸'], 5, '🌸 pontosan 5× szerepel');
+  eq(counts['🍀'], 6, '🍀 pontosan 6× szerepel (leggyakoribb)');
+  assert(SLOTS_SYMBOLS.every(s => SLOTS_REEL_STRIP.includes(s)), 'minden szimbólum szerepel a szalagon');
+
+  // Kifizetési táblázat nem üres, minden szimbólumhoz van érték
+  assert(SLOTS_SYMBOLS.every(s => typeof SLOTS_PAYOUTS[s] === 'number' && SLOTS_PAYOUTS[s] > 1),
+    'minden szimbólumhoz van >1× kifizetés');
+  eq(SLOTS_PAYOUTS['🦥'], 100, 'jackpot szorzó 100×');
+}
+
+{
+  // slotsReelWindow
+  const win18 = slotsReelWindow(18); // 🦥 pozíció
+  eq(win18[1], '🦥', 'slotsReelWindow(18) középső = 🦥');
+  eq(win18.length, 3, 'slotsReelWindow mindig 3 szimbólumot ad');
+  eq(slotsReelWindow(0)[1], SLOTS_REEL_STRIP[0], 'slotsReelWindow(0) középső = strip[0]');
+  // Körbefutás: strip[-1] = strip[19]
+  eq(slotsReelWindow(0)[0], SLOTS_REEL_STRIP[19], 'slotsReelWindow(0) felső = strip[19] (körbefut)');
+  // stop = utolsó: alsó = strip[0]
+  const last = SLOTS_REEL_STRIP.length - 1;
+  eq(slotsReelWindow(last)[2], SLOTS_REEL_STRIP[0], 'slotsReelWindow(utolsó) alsó = strip[0] (körbefut)');
+}
+
+{
+  // playSlots – alapvető struktúra
+  let s = createInitialState(); s.treats = 500;
+  const r = playSlots(s, 10);
+  assert(Array.isArray(r.centerSymbols) && r.centerSymbols.length === 3, 'centerSymbols 3 elemű tömb');
+  assert(Array.isArray(r.stopPositions) && r.stopPositions.length === 3, 'stopPositions 3 elemű tömb');
+  assert(r.stopPositions.every(p => p >= 0 && p < SLOTS_REEL_STRIP.length), 'stopPositions az érvényes tartományban');
+  // Minden stopPos a megfelelő szimbólumra mutat
+  for (let i = 0; i < 3; i++) {
+    eq(SLOTS_REEL_STRIP[r.stopPositions[i]], r.centerSymbols[i],
+      `stopPositions[${i}] → helyes szimbólum a szalagon`);
+  }
+  assert(typeof r.multiplier === 'number', 'multiplier szám');
+  assert(typeof r.payout === 'number' && r.payout >= 0, 'payout nemnegatív szám');
+  assert(typeof r.isJackpot === 'boolean', 'isJackpot boolean');
+  // isJackpot ↔ 3×🦥 ↔ multiplier = 100
+  if (r.isJackpot) {
+    assert(r.centerSymbols.every(s => s === '🦥'), 'isJackpot = true csak 3×🦥-nél');
+    eq(r.multiplier, 100, 'isJackpot = true → multiplier = 100');
+  }
+  assert(s.treats === 500, 'playSlots nem mutálja az eredeti state-et');
+}
+
+{
+  // playSlots – hibakezelés
+  let s = createInitialState(); s.treats = 5;
+  let threw = false;
+  try { playSlots(s, 0); } catch (e) { threw = true; }
+  assert(threw, 'playSlots hibát dob 0 tét esetén');
+
+  threw = false;
+  try { playSlots(s, 100); } catch (e) { threw = true; }
+  assert(threw, 'playSlots hibát dob az egyenlegnél nagyobb tétre');
+}
+
+{
+  // winProb = 1 → mindig nyerő kombináció (3 egyforma)
+  let s = createInitialState(); s.treats = 5000; s.dev.slots.winProb = 1;
+  for (let i = 0; i < 200; i++) {
+    const r = playSlots(s, 1);
+    assert(r.centerSymbols[0] === r.centerSymbols[1] && r.centerSymbols[1] === r.centerSymbols[2],
+      'winProb=1 → mindig 3 egyforma szimbólum');
+    assert(r.multiplier > 0, 'winProb=1 → multiplier > 0');
+    s = r.state;
+  }
+}
+
+{
+  // winProb = 0 → soha nem nyerő kombináció
+  let s = createInitialState(); s.treats = 5000; s.dev.slots.winProb = 0;
+  for (let i = 0; i < 200; i++) {
+    const r = playSlots(s, 1);
+    assert(!(r.centerSymbols[0] === r.centerSymbols[1] && r.centerSymbols[1] === r.centerSymbols[2]),
+      'winProb=0 → soha nem 3 egyforma');
+    eq(r.multiplier, 0, 'winProb=0 → multiplier = 0');
+    s = r.state;
+  }
+}
+
+{
+  // Statisztikai nyerési arány teszt
+  function slotsWinRate(winProb, n) {
+    let s = createInitialState(); s.treats = n * 100; s.dev.slots.winProb = winProb;
+    let wins = 0;
+    for (let i = 0; i < n; i++) {
+      const r = playSlots(s, 1);
+      if (r.multiplier > 0) wins++;
+      s = r.state;
+    }
+    return wins / n;
+  }
+  approx(slotsWinRate(0.5, 5000), 0.5, 0.04, 'Sloth-Slots 50% winProb → ~50% nyerési arány');
+  approx(slotsWinRate(0.2, 5000), 0.2, 0.04, 'Sloth-Slots 20% winProb → ~20% nyerési arány');
+}
+
+{
+  // Jackpot csak 🦥🦥🦥 esetén lehet – soha ne aktiválódjon 3 másik egyforma szimbólumnál
+  let s = createInitialState(); s.treats = 10000; s.dev.slots.winProb = 1;
+  for (let i = 0; i < 300; i++) {
+    const r = playSlots(s, 1);
+    if (r.isJackpot) {
+      assert(r.centerSymbols.every(c => c === '🦥'), 'isJackpot csak 3×🦥-nél igaz');
+      eq(r.multiplier, 100, 'isJackpot → multiplier pontosan 100');
+    }
+    s = r.state;
+  }
+}
+
+{
+  // treatsWon könyvelés slots játékhoz
+  let s = createInitialState(); s.treats = 500; s.dev.slots.winProb = 1;
+  const before = animalCount(s, 'slots');
+  let r;
+  // Pörgetünk addig, amíg pontosan 1 lajhárhoz elegendő nettó nyereményt összegyűjtünk
+  let netWin = 0;
+  while (netWin < 100) {
+    r = playSlots(s, 1);
+    s = r.state;
+    if (r.profit > 0) netWin += r.profit;
+  }
+  assert(animalCount(s, 'slots') >= before + 1, 'slots treatsWon → lajhárszám nő elég nyeremény után');
+}
